@@ -1,0 +1,51 @@
+// Prisma schema for the Kokyo Run (皇居ラン) ranking app.
+// Database: PostgreSQL (Render.com).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  // Face photo stored as a Base64 data URL or an external image URL.
+  photo        String?
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  // Runs submitted by this user.
+  runs           Run[] @relation("Runner")
+  // Runs this user is asked to approve.
+  runsToApprove  Run[] @relation("Approver")
+}
+
+enum RunStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Run {
+  id        String    @id @default(cuid())
+  // Date the run took place.
+  date      DateTime
+  // Number of laps around the Imperial Palace (1 lap ≈ 5 km).
+  laps      Int
+  status    RunStatus @default(PENDING)
+  createdAt DateTime  @default(now())
+
+  runnerId String
+  runner   User   @relation("Runner", fields: [runnerId], references: [id], onDelete: Cascade)
+
+  approverId String
+  approver   User   @relation("Approver", fields: [approverId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([approverId, status])
+  @@index([runnerId])
+}
