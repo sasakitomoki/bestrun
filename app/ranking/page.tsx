@@ -13,7 +13,10 @@ import {
 } from "recharts";
 import { Trophy, Medal } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
+import { OwnerRunAdmin } from "@/components/OwnerRunAdmin";
 import { recentMonths, currentMonthValue } from "@/lib/distance";
+import { useSession } from "@/lib/session";
+import { isOwner } from "@/lib/owner";
 
 type RankingEntry = {
   rank: number;
@@ -34,10 +37,12 @@ function barColor(index: number): string {
 const RANK_ACCENT = ["text-yellow-500", "text-gray-400", "text-amber-700"];
 
 export default function RankingPage() {
+  const { user } = useSession();
   const months = useMemo(() => recentMonths(12), []);
   const [month, setMonth] = useState(currentMonthValue());
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rankingKey, setRankingKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -55,10 +60,8 @@ export default function RankingPage() {
       }
     }
     load();
-    return () => {
-      active = false;
-    };
-  }, [month]);
+    return () => { active = false; };
+  }, [month, rankingKey]);
 
   const chartData = ranking.map((r) => ({
     name: r.name,
@@ -175,6 +178,14 @@ export default function RankingPage() {
             ))}
           </ol>
         </>
+      )}
+
+      {user && isOwner(user.name) && (
+        <OwnerRunAdmin
+          currentUser={user}
+          month={month}
+          onChanged={() => setRankingKey((k) => k + 1)}
+        />
       )}
     </div>
   );
