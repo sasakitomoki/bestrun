@@ -25,7 +25,7 @@ export function RunForm({
 }) {
   const [users, setUsers] = useState<UserOption[]>([]);
   const [date, setDate] = useState(todayLocal());
-  const [laps, setLaps] = useState(1);
+  const [laps, setLaps] = useState("1");
   const [approverId, setApproverId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -47,8 +47,13 @@ export function RunForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMessage(null);
+    const lapsNum = parseInt(laps, 10);
     if (!approverId) {
       setMessage({ type: "err", text: "承認者を選択してください。" });
+      return;
+    }
+    if (!laps || isNaN(lapsNum) || lapsNum < 1 || lapsNum > 100) {
+      setMessage({ type: "err", text: "周回数は1〜100の整数で入力してください。" });
       return;
     }
     setSubmitting(true);
@@ -60,13 +65,13 @@ export function RunForm({
           runnerId: currentUser.id,
           approverId,
           date,
-          laps,
+          laps: lapsNum,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "申請に失敗しました。");
       setMessage({ type: "ok", text: "申請を送信しました。承認をお待ちください。" });
-      setLaps(1);
+      setLaps("1");
       setApproverId("");
       onSubmitted();
     } catch (err) {
@@ -124,11 +129,11 @@ export function RunForm({
             min={1}
             max={100}
             value={laps}
-            onChange={(e) => setLaps(Math.max(1, Number(e.target.value) || 1))}
+            onChange={(e) => setLaps(e.target.value)}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
           />
           <p className="mt-1 text-sm font-semibold text-brand">
-            推定走行距離: {formatDistance(laps)}
+            推定走行距離: {parseInt(laps, 10) >= 1 ? formatDistance(parseInt(laps, 10)) : "—"}
           </p>
         </div>
       </div>
