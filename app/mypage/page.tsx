@@ -29,11 +29,13 @@ export default function MyPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center">
-        <Avatar photo={user.photo} name={user.name} size={64} />
-        <div className="flex-1">
-          <p className="text-sm text-gray-500">マイページ</p>
-          <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
+      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-4">
+          <Avatar photo={user.photo} name={user.name} size={64} />
+          <div className="flex-1">
+            <p className="text-sm text-gray-500">マイページ</p>
+            <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
+          </div>
         </div>
         <EditProfile currentUser={user} />
       </div>

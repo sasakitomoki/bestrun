@@ -94,7 +94,7 @@ export function EditProfile({ currentUser }: { currentUser: SessionUser }) {
     return (
       <button
         onClick={handleOpen}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+        className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
       >
         <Pencil size={14} />
         プロフィール編集
