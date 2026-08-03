@@ -29,7 +29,7 @@ type RankingEntry = {
 };
 
 // Ordered palette for the top ranks; remaining bars share the brand green.
-const BAR_COLORS = ["#166534", "#22c55e", "#4ade80", "#86efac"];
+const BAR_COLORS = ["#0070F2", "#5AACFF", "#A8D4FF", "#D0E9FF"];
 function barColor(index: number): string {
   return BAR_COLORS[index] ?? "#bbf7d0";
 }

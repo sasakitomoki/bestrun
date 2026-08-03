@@ -7,5 +7,6 @@
 }
 
 body {
-  @apply bg-gray-50 text-gray-900 antialiased;
+  @apply bg-sap-bg text-sap-text-dark antialiased;
+  font-family: "72", "72full", Arial, Helvetica, sans-serif;
 }

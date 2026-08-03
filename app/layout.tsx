@@ -4,8 +4,8 @@ import { SessionProvider } from "@/lib/session";
 import { NavBar } from "@/components/NavBar";
 
 export const metadata: Metadata = {
-  title: "皇居ラン ランキング",
-  description: "皇居ランの周回数を登録・承認し、月間ランキングを可視化するアプリ",
+  title: "The Best Runners",
+  description: "SAP 皇居ランの周回数を登録・承認し、月間ランキングを可視化するアプリ",
 };
 
 export default function RootLayout({

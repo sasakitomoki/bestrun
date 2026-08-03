@@ -8,11 +8,27 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // SAP Fiori color palette
         brand: {
-          DEFAULT: "#166534",
-          light: "#22c55e",
-          dark: "#14532d",
+          DEFAULT: "#0070F2", // SAP Blue
+          light: "#5AACFF",   // SAP Blue light
+          dark: "#0040B0",    // SAP Blue dark
         },
+        sap: {
+          shell: "#1D2D3E",   // Shell bar / header
+          bg: "#F5F6F7",      // Page background
+          blue: "#0070F2",
+          "blue-dark": "#0040B0",
+          "blue-light": "#EBF5FF",
+          "text-dark": "#1D2D3E",
+          "text-mid": "#475E75",
+          "border": "#D9D9D9",
+          "success": "#188918",
+          "error": "#B00000",
+        },
+      },
+      fontFamily: {
+        sap: ['"72"', '"72full"', "Arial", "Helvetica", "sans-serif"],
       },
     },
   },
