@@ -36,7 +36,7 @@ export default function MyPage() {
 
       <ApprovalInbox currentUser={user} onChange={bump} />
       <RunForm currentUser={user} onSubmitted={bump} />
-      <MyRuns currentUser={user} refreshKey={refreshKey} />
+      <MyRuns currentUser={user} refreshKey={refreshKey} onChange={bump} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { History } from "lucide-react";
+import { History, Trash2 } from "lucide-react";
 import { formatDistance } from "@/lib/distance";
 import type { SessionUser } from "@/lib/session";
 
@@ -30,12 +30,15 @@ const STATUS_META: Record<
 export function MyRuns({
   currentUser,
   refreshKey,
+  onChange,
 }: {
   currentUser: SessionUser;
   refreshKey: number;
+  onChange?: () => void;
 }) {
   const [runs, setRuns] = useState<MyRun[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -52,6 +55,25 @@ export function MyRuns({
   useEffect(() => {
     load();
   }, [load, refreshKey]);
+
+  async function handleDelete(runId: string) {
+    if (!confirm("この申請を取り消しますか？")) return;
+    setDeletingId(runId);
+    try {
+      const res = await fetch(
+        `/api/runs/${runId}?runnerId=${currentUser.id}`,
+        { method: "DELETE" }
+      );
+      if (res.ok || res.status === 204) {
+        setRuns((prev) => prev.filter((r) => r.id !== runId));
+        onChange?.();
+      }
+    } catch {
+      // ignore
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -83,6 +105,16 @@ export function MyRuns({
                 >
                   {meta.label}
                 </span>
+                {run.status === "PENDING" && (
+                  <button
+                    onClick={() => handleDelete(run.id)}
+                    disabled={deletingId === run.id}
+                    title="申請を取り消す"
+                    className="ml-1 rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </li>
             );
           })}
