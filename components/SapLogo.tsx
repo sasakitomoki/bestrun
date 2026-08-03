@@ -13,7 +13,7 @@ export function SapLogo({ size = 32 }: { size?: number }) {
       width={w}
       height={h}
       // viewBox wider than the shape so text never gets clipped
-      viewBox="-8 -4 210 108"
+      viewBox="-8 -4 225 108"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-label="SAP"
@@ -21,7 +21,7 @@ export function SapLogo({ size = 32 }: { size?: number }) {
       style={{ overflow: "visible" }}
     >
       <polygon
-        points="0,0 172,0 110,100 0,100"
+        points="0,0 192,0 130,100 0,100"
         fill="#00AEEF"
       />
       {/* White SAP wordmark centred in the shape */}
