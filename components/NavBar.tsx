@@ -55,26 +55,30 @@ export function NavBar() {
 
           {user ? (
             <>
-              <Link href="/mypage" className={`relative ${linkClass("/mypage")}`}>
-                <UserCircle size={15} />
-                <span className="hidden sm:inline">マイページ</span>
-                {pendingCount > 0 && (
-                  <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white">
-                    {pendingCount}
-                  </span>
-                )}
-              </Link>
-              <div className="ml-2 flex items-center gap-2 border-l border-white/20 pl-3">
-                <Avatar photo={user.photo} name={user.name} size={26} />
+              {/* Avatar + name → /mypage (badge on avatar) */}
+              <Link
+                href="/mypage"
+                className={`relative ml-2 flex items-center gap-2 rounded border-l border-white/20 pl-3 py-1 pr-2 hover:bg-white/10 transition-colors ${
+                  pathname === "/mypage" ? "bg-sap-blue" : ""
+                }`}
+              >
+                <span className="relative">
+                  <Avatar photo={user.photo} name={user.name} size={26} />
+                  {pendingCount > 0 && (
+                    <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-0.5 text-xs font-bold text-white leading-none">
+                      {pendingCount}
+                    </span>
+                  )}
+                </span>
                 <span className="hidden text-sm text-white/90 sm:inline">{user.name}</span>
-                <button
-                  onClick={logout}
-                  title="ログアウト"
-                  className="rounded p-1.5 text-white/60 hover:bg-white/10 hover:text-white"
-                >
-                  <LogOut size={15} />
-                </button>
-              </div>
+              </Link>
+              <button
+                onClick={logout}
+                title="ログアウト"
+                className="rounded p-1.5 text-white/60 hover:bg-white/10 hover:text-white"
+              >
+                <LogOut size={15} />
+              </button>
             </>
           ) : (
             !loading && (
