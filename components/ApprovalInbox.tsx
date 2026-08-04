@@ -4,10 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Inbox, Check, X } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { formatDistance } from "@/lib/distance";
-import { BADGE_MAP } from "@/lib/badges";
 import type { SessionUser } from "@/lib/session";
-
-const NEW_BADGES_KEY = "tbr-new-badges";
 
 type PendingRun = {
   id: string;
@@ -57,16 +54,7 @@ export function ApprovalInbox({
         body: JSON.stringify({ runId, approverId: currentUser.id, action }),
       });
       if (res.ok) {
-        const data = await res.json();
         setItems((prev) => prev.filter((r) => r.id !== runId));
-        // Store newly awarded badges in sessionStorage for toast display.
-        if (action === "APPROVE" && data.newBadges?.length > 0) {
-          const existing = JSON.parse(sessionStorage.getItem(NEW_BADGES_KEY) ?? "[]");
-          sessionStorage.setItem(
-            NEW_BADGES_KEY,
-            JSON.stringify([...existing, ...data.newBadges])
-          );
-        }
         onChange?.();
       }
     } catch {

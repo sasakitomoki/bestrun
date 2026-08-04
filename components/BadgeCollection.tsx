@@ -12,6 +12,31 @@ function formatDate(iso: string) {
   return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
 }
 
+function seenKey(userId: string) {
+  return `tbr-seen-badges-${userId}`;
+}
+
+function getSeenBadges(userId: string): Set<string> {
+  try {
+    const raw = localStorage.getItem(seenKey(userId));
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function markBadgesSeen(userId: string, badgeIds: string[]) {
+  try {
+    const seen = getSeenBadges(userId);
+    badgeIds.forEach((id) => seen.add(id));
+    localStorage.setItem(seenKey(userId), JSON.stringify([...seen]));
+  } catch {
+    // ignore
+  }
+}
+
+type ToastBadge = { badgeId: string; visible: boolean };
+
 export function BadgeCollection({
   currentUser,
   refreshKey,
@@ -23,6 +48,7 @@ export function BadgeCollection({
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [toasts, setToasts] = useState<ToastBadge[]>([]);
 
   const load = useCallback(async () => {
     try {
@@ -32,7 +58,24 @@ export function BadgeCollection({
       ]);
       if (achRes.ok) {
         const data: AchievementRow[] = await achRes.json();
-        setEarned(new Map(data.map((a) => [a.badgeId, a])));
+        const earnedMap = new Map(data.map((a) => [a.badgeId, a]));
+        setEarned(earnedMap);
+
+        // Detect unseen badges and show toasts.
+        const seen = getSeenBadges(currentUser.id);
+        const unseen = data.filter((a) => !seen.has(a.badgeId)).map((a) => a.badgeId);
+        if (unseen.length > 0) {
+          markBadgesSeen(currentUser.id, unseen);
+          const newToasts = unseen.map((id) => ({ badgeId: id, visible: true }));
+          setToasts(newToasts);
+          newToasts.forEach((_, i) => {
+            setTimeout(() => {
+              setToasts((prev) =>
+                prev.map((t, idx) => (idx === i ? { ...t, visible: false } : t))
+              );
+            }, 3500 + i * 800);
+          });
+        }
       }
       if (userRes.ok) {
         const users: { id: string; selectedBadgeId?: string | null }[] = await userRes.json();
@@ -70,6 +113,28 @@ export function BadgeCollection({
   const selectedBadge = selected ? BADGE_MAP[selected as keyof typeof BADGE_MAP] : null;
 
   return (
+    <>
+      {/* Toast notifications — shown to the runner on their own mypage */}
+      <div className="fixed bottom-6 right-4 z-50 flex flex-col gap-2">
+        {toasts.map((t, i) => {
+          const badge = BADGE_MAP[t.badgeId as keyof typeof BADGE_MAP];
+          if (!badge || !t.visible) return null;
+          return (
+            <div
+              key={i}
+              className="flex items-center gap-3 rounded-xl border border-sap-blue/30 bg-white px-4 py-3 shadow-lg animate-bounce"
+              style={{ animationDuration: "0.6s", animationIterationCount: 3 }}
+            >
+              <span className="text-2xl">{badge.icon}</span>
+              <div>
+                <p className="text-xs font-semibold text-sap-blue">新バッジ獲得！</p>
+                <p className="text-sm font-bold text-sap-text-dark">{badge.name}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-lg font-bold text-sap-text-dark">
@@ -145,5 +210,6 @@ export function BadgeCollection({
         </p>
       )}
     </div>
+    </>
   );
 }
