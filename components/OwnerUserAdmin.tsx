@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ShieldAlert, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
+import { isOwner } from "@/lib/owner";
 import type { SessionUser } from "@/lib/session";
 
 type UserRow = { id: string; name: string; photo: string | null };
@@ -60,18 +61,19 @@ export function OwnerUserAdmin({ currentUser }: { currentUser: SessionUser }) {
         <ul className="mt-4 divide-y divide-red-100">
           {users.map((u) => {
             const isSelf = u.id === currentUser.id;
+            const ownerUser = isOwner(u.name);
             return (
               <li key={u.id} className="flex items-center gap-3 py-3">
                 <Avatar photo={u.photo} name={u.name} size={36} />
                 <span className="flex-1 font-medium text-gray-800">
                   {u.name}
-                  {isSelf && (
+                  {ownerUser && (
                     <span className="ml-2 text-xs font-semibold text-brand">
-                      (オーナー)
+                      {isSelf ? "(オーナー・自分)" : "(オーナー)"}
                     </span>
                   )}
                 </span>
-                {!isSelf && (
+                {!ownerUser && (
                   <button
                     onClick={() => handleDelete(u)}
                     disabled={deletingId === u.id}
