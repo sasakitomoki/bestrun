@@ -19,9 +19,10 @@ model User {
   createdAt    DateTime @default(now())
 
   // Runs submitted by this user.
-  runs           Run[] @relation("Runner")
+  runs           Run[]  @relation("Runner")
   // Runs this user is asked to approve.
-  runsToApprove  Run[] @relation("Approver")
+  runsToApprove  Run[]  @relation("Approver")
+  goals          Goal[]
 }
 
 enum RunStatus {
@@ -48,4 +49,17 @@ model Run {
   @@index([status])
   @@index([approverId, status])
   @@index([runnerId])
+}
+
+model Goal {
+  id     String @id @default(cuid())
+  year   Int
+  month  Int    // 1-12
+  targetLaps Int
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, year, month])
+  @@index([userId])
 }

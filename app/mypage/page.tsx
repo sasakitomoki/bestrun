@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { EditProfile } from "@/components/EditProfile";
+import { MonthlyGoal } from "@/components/MonthlyGoal";
 import { RunForm } from "@/components/RunForm";
 import { ApprovalInbox } from "@/components/ApprovalInbox";
 import { MyRuns } from "@/components/MyRuns";
@@ -40,6 +41,7 @@ export default function MyPage() {
         <EditProfile currentUser={user} />
       </div>
 
+      <MonthlyGoal currentUser={user} />
       <ApprovalInbox currentUser={user} onChange={bump} />
       <RunForm currentUser={user} onSubmitted={bump} />
       <MyRuns currentUser={user} refreshKey={refreshKey} onChange={bump} />
