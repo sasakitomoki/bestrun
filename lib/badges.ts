@@ -47,8 +47,8 @@ export function evaluateBadges(input: EvalInput): BadgeId[] {
   const earned: BadgeId[] = [];
   const { totalApprovedRuns, totalLaps, currentLaps, weatherTemp } = input;
 
-  // First approval ever
-  if (totalApprovedRuns === 1) earned.push("first_step");
+  // First approval ever — use >= 1 so backfills and edge cases are handled safely.
+  if (totalApprovedRuns >= 1) earned.push("first_step");
 
   // Cumulative laps milestones
   if (totalLaps >= 5)  earned.push("rookie");

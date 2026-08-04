@@ -1,14 +1,18 @@
 const { PrismaClient } = require("@prisma/client");
 const p = new PrismaClient();
 
-p.user.findMany({ select: { name: true, passwordHash: true } })
-  .then((users) => {
-    console.log("=== ユーザーのパスワード状態 ===");
-    users.forEach((u) => {
-      // ダミーhash（マイグレーション時のデフォルト値）かどうか判定
-      const isDummy = u.passwordHash === "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
-      console.log(`${u.name}: ${isDummy ? "⚠️  ダミーhash（ログイン不可）" : "✅ 正規のhash"}`);
+async function main() {
+  const users = await p.user.findMany({ select: { id: true, name: true } });
+  for (const u of users) {
+    const runs = await p.run.findMany({
+      where: { runnerId: u.id, status: "APPROVED" },
+      select: { laps: true },
     });
-  })
-  .catch((e) => console.error(e.message))
-  .finally(() => p.$disconnect());
+    const achievements = await p.achievement.findMany({
+      where: { userId: u.id },
+      select: { badgeId: true },
+    });
+    console.log(`[${u.name}] ${runs.length}件 ${runs.reduce((s,r)=>s+r.laps,0)}周 → バッジ: ${achievements.map(a=>a.badgeId).join(", ") || "なし"}`);
+  }
+}
+main().catch(console.error).finally(() => p.$disconnect());

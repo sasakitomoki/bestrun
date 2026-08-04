@@ -1,6 +1,6 @@
-// Change this value to reassign the owner role.
-export const OWNER_NAME = "ささとも";
+// Add names to this array to grant owner privileges.
+export const OWNER_NAMES: string[] = ["ささとも", "りんたろう"];
 
 export function isOwner(name: string | null | undefined): boolean {
-  return name === OWNER_NAME;
+  return typeof name === "string" && OWNER_NAMES.includes(name);
 }
