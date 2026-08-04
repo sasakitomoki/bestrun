@@ -38,11 +38,38 @@ export default function HomePage() {
       <WeatherCard />
 
       {/* How it works — SAP card style */}
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[
-          { step: "01", title: "登録", body: "走った日付・周回数を入力し、承認者を選んで申請します。" },
-          { step: "02", title: "承認", body: "指定された承認者が内容を確認して承認・否認します。" },
-          { step: "03", title: "ランキング", body: "承認済みの周回数が月間ランキングに集計されます。" },
+          {
+            step: "01",
+            title: "まず登録",
+            body: "ユーザー名とパスワードだけで1分で完了。顔写真も設定してみよう！",
+          },
+          {
+            step: "02",
+            title: "走って申請",
+            body: "皇居を走ったら日付・周回数を入力して申請。承認者を仲間から選ぼう。",
+          },
+          {
+            step: "03",
+            title: "仲間が承認",
+            body: "指定された承認者がマイページで確認して承認。承認されたら正式記録に！",
+          },
+          {
+            step: "04",
+            title: "ランキングに載る",
+            body: "承認済みの周回数が月間ランキングに集計。今月の頂点を目指せ！",
+          },
+          {
+            step: "05",
+            title: "目標を立てる",
+            body: "今月の目標周回数を設定してプログレスバーで達成率を確認。100%達成でお祝い演出あり🎉",
+          },
+          {
+            step: "06",
+            title: "バッジを集める",
+            body: "累計周回数や気温条件でバッジ獲得。猛暑日に走れば🔥、50周超えれば🏆が待っている！",
+          },
         ].map((s) => (
           <div
             key={s.step}
