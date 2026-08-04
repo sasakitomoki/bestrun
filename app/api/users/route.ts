@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { generateAvatarDataUrl } from "@/lib/avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,9 @@ export async function POST(req: Request) {
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const password = typeof body.password === "string" ? body.password : "";
   const photo =
-    typeof body.photo === "string" && body.photo.length > 0 ? body.photo : null;
+    typeof body.photo === "string" && body.photo.length > 0
+      ? body.photo
+      : generateAvatarDataUrl(name); // auto-generate when no photo provided
 
   if (!name) {
     return NextResponse.json(
