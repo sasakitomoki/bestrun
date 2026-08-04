@@ -23,6 +23,7 @@ model User {
   // Runs this user is asked to approve.
   runsToApprove  Run[]  @relation("Approver")
   goals          Goal[]
+  achievements   Achievement[]
 }
 
 enum RunStatus {
@@ -56,12 +57,24 @@ model Run {
 model Goal {
   id     String @id @default(cuid())
   year   Int
-  month  Int    // 1-12
+  month  Int
   targetLaps Int
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, year, month])
+  @@index([userId])
+}
+
+model Achievement {
+  id       String   @id @default(cuid())
+  badgeId  String
+  earnedAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
   @@index([userId])
 }
