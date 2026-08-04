@@ -17,12 +17,14 @@ import { OwnerRunAdmin } from "@/components/OwnerRunAdmin";
 import { recentMonths, currentMonthValue } from "@/lib/distance";
 import { useSession } from "@/lib/session";
 import { isOwner } from "@/lib/owner";
+import { BADGE_MAP } from "@/lib/badges";
 
 type RankingEntry = {
   rank: number;
   userId: string;
   name: string;
   photo: string | null;
+  selectedBadgeId: string | null;
   laps: number;
   km: number;
   runCount: number;
@@ -167,7 +169,17 @@ export default function RankingPage() {
                 </div>
                 <Avatar photo={r.photo} name={r.name} size={44} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-bold text-gray-900">{r.name}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate font-bold text-gray-900">{r.name}</p>
+                    {r.selectedBadgeId && BADGE_MAP[r.selectedBadgeId as keyof typeof BADGE_MAP] && (
+                      <span
+                        title={BADGE_MAP[r.selectedBadgeId as keyof typeof BADGE_MAP].name}
+                        className="text-lg leading-none"
+                      >
+                        {BADGE_MAP[r.selectedBadgeId as keyof typeof BADGE_MAP].icon}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-500">{r.runCount}回のラン</p>
                 </div>
                 <div className="text-right">

@@ -13,9 +13,9 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   name      String   @unique
-  // Face photo stored as a Base64 data URL or an external image URL.
   photo        String?
   passwordHash String
+  selectedBadgeId String?  // Badge shown on the ranking page.
   createdAt    DateTime @default(now())
 
   // Runs submitted by this user.

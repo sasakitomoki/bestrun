@@ -4,12 +4,12 @@ import { isOwner } from "@/lib/owner";
 
 export const dynamic = "force-dynamic";
 
-// PATCH /api/users/[id] -> update name and/or photo.
+// PATCH /api/users/[id] -> update name, photo, and/or selectedBadgeId.
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  let body: { name?: unknown; photo?: unknown };
+  let body: { name?: unknown; photo?: unknown; selectedBadgeId?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -24,29 +24,36 @@ export async function PATCH(
       : typeof body.photo === "string" && body.photo.length > 0
       ? body.photo
       : undefined;
+  // null = clear badge, string = set badge, undefined = no change
+  const selectedBadgeId =
+    body.selectedBadgeId === null
+      ? null
+      : typeof body.selectedBadgeId === "string"
+      ? body.selectedBadgeId
+      : undefined;
 
   if (name !== null) {
     if (name.length === 0) {
-      return NextResponse.json(
-        { error: "ユーザー名を入力してください。" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "ユーザー名を入力してください。" }, { status: 400 });
     }
     if (name.length > 30) {
-      return NextResponse.json(
-        { error: "ユーザー名は30文字以内で入力してください。" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "ユーザー名は30文字以内で入力してください。" }, { status: 400 });
     }
-    // Check uniqueness (exclude self).
     const conflict = await prisma.user.findFirst({
       where: { name, NOT: { id: userId } },
     });
     if (conflict) {
-      return NextResponse.json(
-        { error: "そのユーザー名は既に使われています。" },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: "そのユーザー名は既に使われています。" }, { status: 409 });
+    }
+  }
+
+  // Verify the badge is actually earned before setting it.
+  if (selectedBadgeId) {
+    const earned = await prisma.achievement.findUnique({
+      where: { userId_badgeId: { userId, badgeId: selectedBadgeId } },
+    });
+    if (!earned) {
+      return NextResponse.json({ error: "そのバッジはまだ獲得していません。" }, { status: 403 });
     }
   }
 
@@ -55,8 +62,9 @@ export async function PATCH(
     data: {
       ...(name !== null ? { name } : {}),
       ...(photo !== undefined ? { photo } : {}),
+      ...(selectedBadgeId !== undefined ? { selectedBadgeId } : {}),
     },
-    select: { id: true, name: true, photo: true },
+    select: { id: true, name: true, photo: true, selectedBadgeId: true },
   });
 
   return NextResponse.json(user);

@@ -4,8 +4,6 @@ import { monthRange, currentMonthValue, lapsToKm } from "@/lib/distance";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/ranking?month=YYYY-MM
-// Aggregates APPROVED runs per user within the given month, sorted by laps desc.
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const month = searchParams.get("month") || currentMonthValue();
@@ -19,19 +17,22 @@ export async function GET(req: Request) {
   }
 
   const runs = await prisma.run.findMany({
-    where: {
-      status: "APPROVED",
-      date: { gte: range.start, lt: range.end },
-    },
+    where: { status: "APPROVED", date: { gte: range.start, lt: range.end } },
     include: {
-      runner: { select: { id: true, name: true, photo: true } },
+      runner: { select: { id: true, name: true, photo: true, selectedBadgeId: true } },
     },
   });
 
-  // Aggregate laps by runner.
   const byUser = new Map<
     string,
-    { userId: string; name: string; photo: string | null; laps: number; runCount: number }
+    {
+      userId: string;
+      name: string;
+      photo: string | null;
+      selectedBadgeId: string | null;
+      laps: number;
+      runCount: number;
+    }
   >();
 
   for (const run of runs) {
@@ -45,6 +46,7 @@ export async function GET(req: Request) {
         userId: run.runner.id,
         name: run.runner.name,
         photo: run.runner.photo,
+        selectedBadgeId: run.runner.selectedBadgeId,
         laps: run.laps,
         runCount: 1,
       });

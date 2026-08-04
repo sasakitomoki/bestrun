@@ -89,6 +89,11 @@ export async function PATCH(req: Request) {
         data: toAward.map((badgeId) => ({ userId: runnerId, badgeId })),
         skipDuplicates: true,
       });
+      // Auto-select the most recently earned badge (last in toAward list).
+      await prisma.user.update({
+        where: { id: runnerId },
+        data: { selectedBadgeId: toAward[toAward.length - 1] },
+      });
       newBadges.push(...toAward);
     }
   }
