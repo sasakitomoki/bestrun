@@ -22,3 +22,10 @@ services:
           property: connectionString
       - key: NODE_VERSION
         value: "20.11.1"
+      # Email notifications via Resend — set these in the Render dashboard.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: NOTIFY_FROM_EMAIL
+        sync: false

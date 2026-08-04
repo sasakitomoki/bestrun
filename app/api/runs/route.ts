@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notifyRunSubmitted } from "@/lib/notify";
+import { lapsToKm } from "@/lib/distance";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +68,27 @@ export async function POST(req: Request) {
   const run = await prisma.run.create({
     data: { runnerId, approverId, date, laps, status: "PENDING", weatherTemp, weatherCode },
   });
+
+  // Fetch names for the notification (non-blocking).
+  prisma.user.findMany({
+    where: { id: { in: [runnerId, approverId] } },
+    select: { id: true, name: true },
+  }).then((users) => {
+    const runner = users.find((u) => u.id === runnerId);
+    const approver = users.find((u) => u.id === approverId);
+    if (runner && approver) {
+      const dateLabel = date.toLocaleDateString("ja-JP", {
+        year: "numeric", month: "long", day: "numeric", timeZone: "Asia/Tokyo",
+      });
+      notifyRunSubmitted({
+        runnerName: runner.name,
+        approverName: approver.name,
+        laps,
+        km: lapsToKm(laps),
+        date: dateLabel,
+      }).catch(() => {/* ignore notification errors */});
+    }
+  }).catch(() => {/* ignore */});
 
   return NextResponse.json(run, { status: 201 });
 }
