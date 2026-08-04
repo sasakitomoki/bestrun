@@ -4,13 +4,15 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 // POST /api/runs -> submit a run request.
-// body: { runnerId, approverId, date (ISO or YYYY-MM-DD), laps }
+// body: { runnerId, approverId, date, laps, weatherTemp?, weatherCode? }
 export async function POST(req: Request) {
   let body: {
     runnerId?: unknown;
     approverId?: unknown;
     date?: unknown;
     laps?: unknown;
+    weatherTemp?: unknown;
+    weatherCode?: unknown;
   };
   try {
     body = await req.json();
@@ -22,6 +24,8 @@ export async function POST(req: Request) {
   const approverId = typeof body.approverId === "string" ? body.approverId : "";
   const laps = Number(body.laps);
   const dateStr = typeof body.date === "string" ? body.date : "";
+  const weatherTemp = typeof body.weatherTemp === "number" ? body.weatherTemp : null;
+  const weatherCode = typeof body.weatherCode === "number" ? body.weatherCode : null;
 
   if (!runnerId || !approverId) {
     return NextResponse.json(
@@ -60,7 +64,7 @@ export async function POST(req: Request) {
   }
 
   const run = await prisma.run.create({
-    data: { runnerId, approverId, date, laps, status: "PENDING" },
+    data: { runnerId, approverId, date, laps, status: "PENDING", weatherTemp, weatherCode },
   });
 
   return NextResponse.json(run, { status: 201 });

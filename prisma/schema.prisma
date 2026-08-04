@@ -33,12 +33,14 @@ enum RunStatus {
 
 model Run {
   id        String    @id @default(cuid())
-  // Date the run took place.
   date      DateTime
-  // Number of laps around the Imperial Palace (1 lap ≈ 5 km).
   laps      Int
   status    RunStatus @default(PENDING)
   createdAt DateTime  @default(now())
+
+  // Weather at time of submission — used for future achievement logic.
+  weatherTemp Float?  // °C
+  weatherCode Int?    // WMO weather code (https://open-meteo.com/en/docs#weathervariables)
 
   runnerId String
   runner   User   @relation("Runner", fields: [runnerId], references: [id], onDelete: Cascade)

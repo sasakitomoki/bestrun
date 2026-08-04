@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Send } from "lucide-react";
 import { formatDistance } from "@/lib/distance";
 import type { SessionUser } from "@/lib/session";
+import type { WeatherData } from "@/lib/weather";
 
 type UserOption = { id: string; name: string; photo: string | null };
 
@@ -27,6 +28,7 @@ export function RunForm({
   const [date, setDate] = useState(todayLocal());
   const [laps, setLaps] = useState("1");
   const [approverId, setApproverId] = useState("");
+  const [weather, setWeather] = useState<WeatherData | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
@@ -37,12 +39,17 @@ export function RunForm({
         if (!res.ok) return;
         const data: UserOption[] = await res.json();
         setUsers(data.filter((u) => u.id !== currentUser.id));
-      } catch {
-        // ignore
-      }
+      } catch { /* ignore */ }
     }
     load();
   }, [currentUser.id]);
+
+  useEffect(() => {
+    fetch("/api/weather")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setWeather(d))
+      .catch(() => {/* ignore */});
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -66,6 +73,8 @@ export function RunForm({
           approverId,
           date,
           laps: lapsNum,
+          weatherTemp: weather?.temp ?? null,
+          weatherCode: weather?.code ?? null,
         }),
       });
       const data = await res.json();
@@ -92,6 +101,11 @@ export function RunForm({
       <h2 className="flex items-center gap-2 text-lg font-bold text-brand-dark">
         <Send size={18} />
         走破申請
+        {weather && (
+          <span className="ml-auto text-sm font-normal text-sap-text-mid">
+            {weather.emoji} {weather.temp}°C
+          </span>
+        )}
       </h2>
 
       {message && (

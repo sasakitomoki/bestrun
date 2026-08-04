@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Trophy, UserCircle } from "lucide-react";
 import { SapLogo } from "@/components/SapLogo";
+import { WeatherCard } from "@/components/WeatherCard";
 
 export default function HomePage() {
   return (
@@ -32,6 +33,9 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* Weather */}
+      <WeatherCard />
 
       {/* How it works — SAP card style */}
       <section className="grid gap-4 sm:grid-cols-3">
