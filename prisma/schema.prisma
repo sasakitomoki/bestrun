@@ -22,10 +22,10 @@ model User {
 
   // Runs submitted by this user.
   runs           Run[]  @relation("Runner")
-  // Runs this user is asked to approve.
   runsToApprove  Run[]  @relation("Approver")
   goals          Goal[]
   achievements   Achievement[]
+  eventAttendees EventAttendee[]
 }
 
 enum RunStatus {
@@ -79,4 +79,31 @@ model Achievement {
 
   @@unique([userId, badgeId])
   @@index([userId])
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  title       String
+  date        DateTime  // Event date (date part used for display & sorting)
+  timeLabel   String?   // e.g. "朝6:00〜"
+  location    String?
+  description String?
+  createdAt   DateTime  @default(now())
+
+  attendees   EventAttendee[]
+
+  @@index([date])
+}
+
+model EventAttendee {
+  id        String   @id @default(cuid())
+  joinedAt  DateTime @default(now())
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
 }

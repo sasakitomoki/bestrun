@@ -11,6 +11,7 @@ import { RunForm } from "@/components/RunForm";
 import { ApprovalInbox } from "@/components/ApprovalInbox";
 import { MyRuns } from "@/components/MyRuns";
 import { OwnerUserAdmin } from "@/components/OwnerUserAdmin";
+import { OwnerEventAdmin } from "@/components/OwnerEventAdmin";
 import { useSession } from "@/lib/session";
 import { isOwner } from "@/lib/owner";
 
@@ -48,6 +49,7 @@ export default function MyPage() {
       <ApprovalInbox currentUser={user} onChange={bump} />
       <RunForm currentUser={user} onSubmitted={bump} />
       <MyRuns currentUser={user} refreshKey={refreshKey} onChange={bump} />
+      {isOwner(user.name) && <OwnerEventAdmin currentUser={user} />}
       {isOwner(user.name) && <OwnerUserAdmin currentUser={user} />}
     </div>
   );

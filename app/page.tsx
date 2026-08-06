@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Trophy, UserCircle } from "lucide-react";
 import { SapLogo } from "@/components/SapLogo";
 import { WeatherCard } from "@/components/WeatherCard";
+import { EventBoard } from "@/components/EventBoard";
 
 export default function HomePage() {
   return (
@@ -33,6 +34,9 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* Events */}
+      <EventBoard />
 
       {/* Weather */}
       <WeatherCard />
