@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { WeatherCard } from "@/components/WeatherCard";
 import { EventSection } from "@/components/EventSection";
 import { MonthlySummary } from "@/components/MonthlySummary";
 import { ActivityFeed } from "@/components/ActivityFeed";
@@ -22,17 +21,14 @@ export default function HomePage() {
   return (
     <div className="space-y-5">
 
-      {/* ① 今月のサマリー（自分の順位・ランキングTop3・チーム合計） */}
+      {/* ① 今月のサマリー（順位・ランキング・チーム・天気） */}
       <MonthlySummary />
 
-      {/* ② カレンダー＋イベントパネル */}
+      {/* ② カレンダー＋イベント */}
       <EventSection />
 
-      {/* ③ 直近アクティビティ */}
+      {/* ③ 直近の走破 */}
       <ActivityFeed />
-
-      {/* ④ 天気 */}
-      <WeatherCard />
 
       {/* ⑥ 使い方ガイド（折りたたみ） */}
       <div className="rounded-xl border border-sap-border bg-white shadow-sm overflow-hidden">

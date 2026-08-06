@@ -7,6 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { BADGE_MAP } from "@/lib/badges";
 import { currentMonthValue } from "@/lib/distance";
 import { useSession } from "@/lib/session";
+import type { WeatherData } from "@/lib/weather";
 
 type RankEntry = {
   rank: number | null;
@@ -43,14 +44,20 @@ export function MonthlySummary() {
   const [ranking, setRanking] = useState<RankEntry[]>([]);
   const [monthLabel, setMonthLabel] = useState("");
   const [loading, setLoading] = useState(true);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
 
   useEffect(() => {
     const m = currentMonthValue();
     const [y, mo] = m.split("-");
     setMonthLabel(`${parseInt(y)}年${parseInt(mo)}月`);
-    fetch(`/api/ranking?month=${m}`)
-      .then((r) => r.json())
-      .then((d) => setRanking(d.ranking ?? []))
+    Promise.all([
+      fetch(`/api/ranking?month=${m}`).then((r) => r.json()),
+      fetch("/api/weather").then((r) => r.ok ? r.json() : null),
+    ])
+      .then(([rankData, weatherData]) => {
+        setRanking(rankData.ranking ?? []);
+        if (weatherData && !weatherData.error) setWeather(weatherData);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -94,9 +101,18 @@ export function MonthlySummary() {
           <TrendingUp size={15} />
           {monthLabel} サマリー
         </span>
-        <Link href="/ranking" className="text-xs text-white/60 hover:text-white">
-          全員を見る →
-        </Link>
+        <div className="flex items-center gap-3">
+          {weather && (
+            <span className="text-xs text-white/80 flex items-center gap-1.5">
+              <span>{weather.emoji}</span>
+              <span className="font-semibold">{weather.temp}°C</span>
+              <span className="text-white/50">{weather.label}</span>
+            </span>
+          )}
+          <Link href="/ranking" className="text-xs text-white/60 hover:text-white">
+            全員を見る →
+          </Link>
+        </div>
       </div>
 
       <div className="p-4 space-y-4">
