@@ -4,9 +4,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { WeatherCard } from "@/components/WeatherCard";
 import { EventSection } from "@/components/EventSection";
-import { HomeRanking } from "@/components/HomeRanking";
-import { MyRankBanner } from "@/components/MyRankBanner";
-import { TeamStats } from "@/components/TeamStats";
+import { MonthlySummary } from "@/components/MonthlySummary";
 import { ActivityFeed } from "@/components/ActivityFeed";
 
 const STEPS = [
@@ -24,17 +22,11 @@ export default function HomePage() {
   return (
     <div className="space-y-5">
 
-      {/* ① 自分の現在順位（ログイン時のみ） */}
-      <MyRankBanner />
+      {/* ① 今月のサマリー（自分の順位・ランキングTop3・チーム合計） */}
+      <MonthlySummary />
 
-      {/* ② カレンダー ＋ イベントパネル ＋ ランキングTop3 ＋ チーム累計 */}
-      <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
-        <EventSection />
-        <div className="space-y-5">
-          <HomeRanking />
-          <TeamStats />
-        </div>
-      </div>
+      {/* ② カレンダー＋イベントパネル */}
+      <EventSection />
 
       {/* ③ 直近アクティビティ */}
       <ActivityFeed />
