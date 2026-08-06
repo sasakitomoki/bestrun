@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ShieldAlert, Pencil, Trash2, Check, X } from "lucide-react";
+import { ShieldAlert, Pencil, Trash2, Check, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import type { SessionUser } from "@/lib/session";
 
@@ -42,6 +42,8 @@ export function OwnerRunAdmin({
   const [editLaps, setEditLaps] = useState("");
   const [editStatus, setEditStatus] = useState<RunStatus>("PENDING");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const INITIAL_SHOW = 5;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -120,8 +122,9 @@ export function OwnerRunAdmin({
       ) : runs.length === 0 ? (
         <p className="mt-4 text-sm text-gray-500">この月のランはありません。</p>
       ) : (
+        <>
         <ul className="mt-4 divide-y divide-red-100">
-          {runs.map((run) => {
+          {(expanded ? runs : runs.slice(0, INITIAL_SHOW)).map((run) => {
             const isEditing = editId === run.id;
             return (
               <li key={run.id} className="py-3">
@@ -200,6 +203,19 @@ export function OwnerRunAdmin({
             );
           })}
         </ul>
+        {runs.length > INITIAL_SHOW && (
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg border border-red-200 py-2 text-xs font-semibold text-red-600 hover:bg-red-100"
+          >
+            {expanded ? (
+              <><ChevronUp size={14} />折りたたむ</>
+            ) : (
+              <><ChevronDown size={14} />もっと見る（残り{runs.length - INITIAL_SHOW}件）</>
+            )}
+          </button>
+        )}
+        </>
       )}
     </div>
   );
