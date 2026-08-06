@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Award } from "lucide-react";
+import { Award, ChevronDown, ChevronUp } from "lucide-react";
 import { BADGES, BADGE_MAP } from "@/lib/badges";
 import type { SessionUser } from "@/lib/session";
 
@@ -49,6 +49,7 @@ export function BadgeCollection({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toasts, setToasts] = useState<ToastBadge[]>([]);
+  const [badgesOpen, setBadgesOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -135,16 +136,23 @@ export function BadgeCollection({
         })}
       </div>
 
-    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="flex items-center gap-2 text-lg font-bold text-sap-text-dark">
-          <Award size={18} className="text-sap-blue" />
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <button
+        onClick={() => setBadgesOpen((v) => !v)}
+        className="flex w-full items-center justify-between px-5 py-4 hover:bg-gray-50"
+      >
+        <h2 className="flex items-center gap-2 text-base font-bold text-sap-text-dark">
+          <Award size={16} className="text-sap-blue" />
           バッジコレクション
+          <span className="text-xs font-normal text-sap-text-mid">
+            {loading ? "" : `${earnedCount} / ${BADGES.length}`}
+          </span>
         </h2>
-        <span className="text-sm text-sap-text-mid">
-          {loading ? "…" : `${earnedCount} / ${BADGES.length} 獲得`}
-        </span>
-      </div>
+        {badgesOpen ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+      </button>
+
+      {badgesOpen && (
+        <div className="border-t border-gray-100 px-5 pb-5 pt-4">
 
       {/* Currently selected badge */}
       {selectedBadge && (
@@ -205,9 +213,11 @@ export function BadgeCollection({
       </div>
 
       {!loading && earnedCount === 0 && (
-        <p className="mt-4 text-center text-sm text-sap-text-mid">
-          走って承認されるとバッジが獲得できます！
-        </p>
+          <p className="mt-4 text-center text-sm text-sap-text-mid">
+            走って承認されるとバッジが獲得できます！
+          </p>
+        )}
+        </div>
       )}
     </div>
     </>
