@@ -68,11 +68,9 @@ export default function RankingPage() {
     return () => { active = false; };
   }, [month, rankingKey]);
 
-  const chartData = ranking.map((r) => ({
-    name: r.name,
-    laps: r.laps,
-    km: r.km,
-  }));
+  const chartData = ranking
+    .filter((r) => r.laps > 0)
+    .map((r) => ({ name: r.name, laps: r.laps, km: r.km }));
 
   const monthLabel =
     months.find((m) => m.value === month)?.label ?? month;
@@ -156,51 +154,68 @@ export default function RankingPage() {
 
           {/* Rank list */}
           <ol className="space-y-2">
-            {ranking.map((r, i) => (
-              <li
-                key={r.userId}
-                className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-              >
-                <div className="flex w-8 shrink-0 justify-center">
-                  {i < 3 ? (
-                    <Medal className={RANK_ACCENT[i]} size={24} />
-                  ) : (
-                    <span className="text-lg font-bold text-gray-400">
-                      {r.rank}
-                    </span>
-                  )}
-                </div>
-                <Avatar photo={r.photo} name={r.name} size={44} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <p className="truncate font-bold text-gray-900">{r.name}</p>
-                    {r.selectedBadgeId && BADGE_MAP[r.selectedBadgeId as keyof typeof BADGE_MAP] && (
-                      <span
-                        title={BADGE_MAP[r.selectedBadgeId as keyof typeof BADGE_MAP].name}
-                        className="text-lg leading-none"
-                      >
-                        {BADGE_MAP[r.selectedBadgeId as keyof typeof BADGE_MAP].icon}
+            {ranking.map((r, i) => {
+              const isZero = r.rank === null;
+              return (
+                <li
+                  key={r.userId}
+                  className={`flex items-center gap-4 rounded-xl border p-4 shadow-sm ${
+                    isZero
+                      ? "border-gray-100 bg-gray-50 opacity-70"
+                      : "border-gray-200 bg-white"
+                  }`}
+                >
+                  <div className="flex w-8 shrink-0 justify-center">
+                    {isZero ? (
+                      <span className="text-lg font-bold text-gray-300">—</span>
+                    ) : i < 3 ? (
+                      <Medal className={RANK_ACCENT[i]} size={24} />
+                    ) : (
+                      <span className="text-lg font-bold text-gray-400">
+                        {r.rank}
                       </span>
                     )}
                   </div>
-                  {r.motivation && (
-                    <p className="text-xs font-semibold text-sap-blue">
-                      {MOTIVATIONS.find((m) => m.value === r.motivation)?.label ?? r.motivation}
-                    </p>
-                  )}
-                  {r.statusMessage && (
-                    <p className="truncate text-xs text-sap-text-mid">💬 {r.statusMessage}</p>
-                  )}
-                  {!r.motivation && !r.statusMessage && (
-                    <p className="text-xs text-gray-400">{r.runCount}回のラン</p>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="text-xl font-bold text-brand">{r.laps}周</p>
-                  <p className="text-sm text-gray-500">{r.km}km</p>
-                </div>
-              </li>
-            ))}
+                  <Avatar photo={r.photo} name={r.name} size={44} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <p className="truncate font-bold text-gray-900">{r.name}</p>
+                      {r.selectedBadgeId && BADGE_MAP[r.selectedBadgeId as keyof typeof BADGE_MAP] && (
+                        <span
+                          title={BADGE_MAP[r.selectedBadgeId as keyof typeof BADGE_MAP].name}
+                          className="text-lg leading-none"
+                        >
+                          {BADGE_MAP[r.selectedBadgeId as keyof typeof BADGE_MAP].icon}
+                        </span>
+                      )}
+                    </div>
+                    {r.motivation && (
+                      <p className="text-xs font-semibold text-sap-blue">
+                        {MOTIVATIONS.find((m) => m.value === r.motivation)?.label ?? r.motivation}
+                      </p>
+                    )}
+                    {r.statusMessage && (
+                      <p className="truncate text-xs text-sap-text-mid">💬 {r.statusMessage}</p>
+                    )}
+                    {!r.motivation && !r.statusMessage && (
+                      <p className="text-xs text-gray-400">
+                        {isZero ? "今月はまだ走っていません" : `${r.runCount}回のラン`}
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    {isZero ? (
+                      <p className="text-sm font-bold text-gray-300">0周</p>
+                    ) : (
+                      <>
+                        <p className="text-xl font-bold text-brand">{r.laps}周</p>
+                        <p className="text-sm text-gray-500">{r.km}km</p>
+                      </>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ol>
         </>
       )}

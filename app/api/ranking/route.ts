@@ -16,13 +16,29 @@ export async function GET(req: Request) {
     );
   }
 
-  const runs = await prisma.run.findMany({
-    where: { status: "APPROVED", date: { gte: range.start, lt: range.end } },
-    include: {
-      runner: { select: { id: true, name: true, photo: true, selectedBadgeId: true, statusMessage: true, motivation: true } },
-    },
-  });
+  // Fetch approved runs and all users in parallel.
+  const [runs, allUsers] = await Promise.all([
+    prisma.run.findMany({
+      where: { status: "APPROVED", date: { gte: range.start, lt: range.end } },
+      include: {
+        runner: {
+          select: {
+            id: true, name: true, photo: true,
+            selectedBadgeId: true, statusMessage: true, motivation: true,
+          },
+        },
+      },
+    }),
+    prisma.user.findMany({
+      select: {
+        id: true, name: true, photo: true,
+        selectedBadgeId: true, statusMessage: true, motivation: true,
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
 
+  // Aggregate laps by runner.
   const byUser = new Map<
     string,
     {
@@ -57,10 +73,27 @@ export async function GET(req: Request) {
     }
   }
 
-  const ranking = Array.from(byUser.values())
-    .map((e) => ({ ...e, km: lapsToKm(e.laps) }))
+  // Users with at least 1 lap — ranked.
+  const ranked = Array.from(byUser.values())
+    .map((e) => ({ ...e, km: lapsToKm(e.laps), rank: 0 }))
     .sort((a, b) => b.laps - a.laps || a.name.localeCompare(b.name))
-    .map((e, i) => ({ rank: i + 1, ...e }));
+    .map((e, i) => ({ ...e, rank: i + 1 }));
 
-  return NextResponse.json({ month, ranking });
+  // Users with 0 laps — not ranked (rank: null).
+  const zeroLap = allUsers
+    .filter((u) => !byUser.has(u.id))
+    .map((u) => ({
+      userId: u.id,
+      name: u.name,
+      photo: u.photo,
+      selectedBadgeId: u.selectedBadgeId,
+      statusMessage: u.statusMessage,
+      motivation: u.motivation,
+      laps: 0,
+      km: 0,
+      runCount: 0,
+      rank: null,
+    }));
+
+  return NextResponse.json({ month, ranking: [...ranked, ...zeroLap] });
 }
