@@ -14,6 +14,7 @@ import {
 import { Trophy, Medal } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { OwnerRunAdmin } from "@/components/OwnerRunAdmin";
+import { UserProfileModal } from "@/components/UserProfileModal";
 import { recentMonths, currentMonthValue } from "@/lib/distance";
 import { useSession } from "@/lib/session";
 import { isOwner } from "@/lib/owner";
@@ -48,6 +49,7 @@ export default function RankingPage() {
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [rankingKey, setRankingKey] = useState(0);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -159,7 +161,8 @@ export default function RankingPage() {
               return (
                 <li
                   key={r.userId}
-                  className={`flex items-center gap-4 rounded-xl border p-4 shadow-sm ${
+                  onClick={() => setSelectedUserId(r.userId)}
+                  className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 shadow-sm transition-colors hover:border-sap-blue/40 hover:bg-sap-blue-light ${
                     isZero
                       ? "border-gray-100 bg-gray-50 opacity-70"
                       : "border-gray-200 bg-white"
@@ -225,6 +228,13 @@ export default function RankingPage() {
           currentUser={user}
           month={month}
           onChanged={() => setRankingKey((k) => k + 1)}
+        />
+      )}
+
+      {selectedUserId && (
+        <UserProfileModal
+          userId={selectedUserId}
+          onClose={() => setSelectedUserId(null)}
         />
       )}
     </div>

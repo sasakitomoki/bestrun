@@ -4,6 +4,43 @@ import { isOwner } from "@/lib/owner";
 
 export const dynamic = "force-dynamic";
 
+// GET /api/users/[id] -> public profile for ranking modal.
+export async function GET(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
+  const user = await prisma.user.findUnique({
+    where: { id: params.id },
+    select: {
+      id: true, name: true, photo: true,
+      selectedBadgeId: true, statusMessage: true, motivation: true,
+      achievements: { select: { badgeId: true, earnedAt: true }, orderBy: { earnedAt: "asc" } },
+      runs: {
+        where: { status: "APPROVED" },
+        select: { laps: true, date: true },
+      },
+    },
+  });
+
+  if (!user) {
+    return NextResponse.json({ error: "ユーザーが見つかりません。" }, { status: 404 });
+  }
+
+  const totalLaps = user.runs.reduce((s, r) => s + r.laps, 0);
+
+  return NextResponse.json({
+    id: user.id,
+    name: user.name,
+    photo: user.photo,
+    selectedBadgeId: user.selectedBadgeId,
+    statusMessage: user.statusMessage,
+    motivation: user.motivation,
+    achievements: user.achievements,
+    totalLaps,
+    totalRuns: user.runs.length,
+  });
+}
+
 // PATCH /api/users/[id] -> update name, photo, selectedBadgeId, statusMessage, motivation.
 export async function PATCH(
   req: Request,
