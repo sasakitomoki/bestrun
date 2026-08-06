@@ -4,12 +4,18 @@ import { isOwner } from "@/lib/owner";
 
 export const dynamic = "force-dynamic";
 
-// PATCH /api/users/[id] -> update name, photo, and/or selectedBadgeId.
+// PATCH /api/users/[id] -> update name, photo, selectedBadgeId, statusMessage, motivation.
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  let body: { name?: unknown; photo?: unknown; selectedBadgeId?: unknown };
+  let body: {
+    name?: unknown;
+    photo?: unknown;
+    selectedBadgeId?: unknown;
+    statusMessage?: unknown;
+    motivation?: unknown;
+  };
   try {
     body = await req.json();
   } catch {
@@ -24,12 +30,23 @@ export async function PATCH(
       : typeof body.photo === "string" && body.photo.length > 0
       ? body.photo
       : undefined;
-  // null = clear badge, string = set badge, undefined = no change
   const selectedBadgeId =
     body.selectedBadgeId === null
       ? null
       : typeof body.selectedBadgeId === "string"
       ? body.selectedBadgeId
+      : undefined;
+  const statusMessage =
+    body.statusMessage === null
+      ? null
+      : typeof body.statusMessage === "string"
+      ? body.statusMessage.slice(0, 50)
+      : undefined;
+  const motivation =
+    body.motivation === null
+      ? null
+      : typeof body.motivation === "string"
+      ? body.motivation
       : undefined;
 
   if (name !== null) {
@@ -47,7 +64,6 @@ export async function PATCH(
     }
   }
 
-  // Verify the badge is actually earned before setting it.
   if (selectedBadgeId) {
     const earned = await prisma.achievement.findUnique({
       where: { userId_badgeId: { userId, badgeId: selectedBadgeId } },
@@ -63,8 +79,10 @@ export async function PATCH(
       ...(name !== null ? { name } : {}),
       ...(photo !== undefined ? { photo } : {}),
       ...(selectedBadgeId !== undefined ? { selectedBadgeId } : {}),
+      ...(statusMessage !== undefined ? { statusMessage } : {}),
+      ...(motivation !== undefined ? { motivation } : {}),
     },
-    select: { id: true, name: true, photo: true, selectedBadgeId: true },
+    select: { id: true, name: true, photo: true, selectedBadgeId: true, statusMessage: true, motivation: true },
   });
 
   return NextResponse.json(user);

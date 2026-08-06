@@ -18,6 +18,7 @@ import { recentMonths, currentMonthValue } from "@/lib/distance";
 import { useSession } from "@/lib/session";
 import { isOwner } from "@/lib/owner";
 import { BADGE_MAP } from "@/lib/badges";
+import { MOTIVATIONS } from "@/components/StatusEditor";
 
 type RankingEntry = {
   rank: number;
@@ -25,6 +26,8 @@ type RankingEntry = {
   name: string;
   photo: string | null;
   selectedBadgeId: string | null;
+  statusMessage: string | null;
+  motivation: string | null;
   laps: number;
   km: number;
   runCount: number;
@@ -180,7 +183,17 @@ export default function RankingPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-500">{r.runCount}回のラン</p>
+                  {r.motivation && (
+                    <p className="text-xs font-semibold text-sap-blue">
+                      {MOTIVATIONS.find((m) => m.value === r.motivation)?.label ?? r.motivation}
+                    </p>
+                  )}
+                  {r.statusMessage && (
+                    <p className="truncate text-xs text-sap-text-mid">💬 {r.statusMessage}</p>
+                  )}
+                  {!r.motivation && !r.statusMessage && (
+                    <p className="text-xs text-gray-400">{r.runCount}回のラン</p>
+                  )}
                 </div>
                 <div className="text-right">
                   <p className="text-xl font-bold text-brand">{r.laps}周</p>

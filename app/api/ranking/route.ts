@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   const runs = await prisma.run.findMany({
     where: { status: "APPROVED", date: { gte: range.start, lt: range.end } },
     include: {
-      runner: { select: { id: true, name: true, photo: true, selectedBadgeId: true } },
+      runner: { select: { id: true, name: true, photo: true, selectedBadgeId: true, statusMessage: true, motivation: true } },
     },
   });
 
@@ -30,6 +30,8 @@ export async function GET(req: Request) {
       name: string;
       photo: string | null;
       selectedBadgeId: string | null;
+      statusMessage: string | null;
+      motivation: string | null;
       laps: number;
       runCount: number;
     }
@@ -47,6 +49,8 @@ export async function GET(req: Request) {
         name: run.runner.name,
         photo: run.runner.photo,
         selectedBadgeId: run.runner.selectedBadgeId,
+        statusMessage: run.runner.statusMessage,
+        motivation: run.runner.motivation,
         laps: run.laps,
         runCount: 1,
       });

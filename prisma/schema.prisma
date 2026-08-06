@@ -15,7 +15,9 @@ model User {
   name      String   @unique
   photo        String?
   passwordHash String
-  selectedBadgeId String?  // Badge shown on the ranking page.
+  selectedBadgeId String?
+  statusMessage   String?  // Free-text one-liner shown on ranking and mypage.
+  motivation      String?  // Monthly motivation tag (e.g. "今月本気出す").
   createdAt    DateTime @default(now())
 
   // Runs submitted by this user.

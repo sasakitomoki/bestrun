@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { EditProfile } from "@/components/EditProfile";
+import { StatusEditor } from "@/components/StatusEditor";
 import { MonthlyGoal } from "@/components/MonthlyGoal";
 import { BadgeCollection } from "@/components/BadgeCollection";
 import { RunForm } from "@/components/RunForm";
@@ -37,6 +38,7 @@ export default function MyPage() {
             <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
           </div>
         </div>
+        <StatusEditor currentUser={user} />
         <EditProfile currentUser={user} />
       </div>
 
