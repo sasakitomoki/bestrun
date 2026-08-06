@@ -8,7 +8,8 @@ type EventData = {
   id: string;
   title: string;
   date: string;
-  timeLabel: string | null;
+  startTime: string | null;
+  endTime: string | null;
   location: string | null;
   description: string | null;
 };
@@ -16,12 +17,13 @@ type EventData = {
 type FormState = {
   title: string;
   date: string;
-  timeLabel: string;
+  startTime: string;
+  endTime: string;
   location: string;
   description: string;
 };
 
-const EMPTY_FORM: FormState = { title: "", date: "", timeLabel: "", location: "", description: "" };
+const EMPTY_FORM: FormState = { title: "", date: "", startTime: "", endTime: "", location: "", description: "" };
 
 function todayLocal(): string {
   const d = new Date();
@@ -63,7 +65,8 @@ export function OwnerEventAdmin({ currentUser }: { currentUser: SessionUser }) {
     setForm({
       title: e.title,
       date: e.date.slice(0, 10),
-      timeLabel: e.timeLabel ?? "",
+      startTime: e.startTime ?? "",
+      endTime: e.endTime ?? "",
       location: e.location ?? "",
       description: e.description ?? "",
     });
@@ -79,7 +82,8 @@ export function OwnerEventAdmin({ currentUser }: { currentUser: SessionUser }) {
         requesterName: currentUser.name,
         title: form.title.trim(),
         date: new Date(form.date).toISOString(),
-        timeLabel: form.timeLabel.trim() || null,
+        startTime: form.startTime.trim() || null,
+        endTime: form.endTime.trim() || null,
         location: form.location.trim() || null,
         description: form.description.trim() || null,
       };
@@ -145,10 +149,10 @@ export function OwnerEventAdmin({ currentUser }: { currentUser: SessionUser }) {
           <h3 className="text-sm font-bold text-sap-text-dark">
             {editId ? "イベント編集" : "新規イベント追加"}
           </h3>
+
           {[
             { label: "タイトル *", key: "title", type: "text", placeholder: "皇居ラン 本番開始！" },
             { label: "日付 *", key: "date", type: "date", placeholder: "" },
-            { label: "時刻", key: "timeLabel", type: "text", placeholder: "朝6:00〜" },
             { label: "場所", key: "location", type: "text", placeholder: "皇居前・和田倉門" },
           ].map((f) => (
             <div key={f.key}>
@@ -162,6 +166,29 @@ export function OwnerEventAdmin({ currentUser }: { currentUser: SessionUser }) {
               />
             </div>
           ))}
+
+          {/* Start / End time side by side */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-0.5 block text-xs font-medium text-gray-600">開始時刻</label>
+              <input
+                type="time"
+                value={form.startTime}
+                onChange={(e) => setForm((prev) => ({ ...prev, startTime: e.target.value }))}
+                className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-sap-blue focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="mb-0.5 block text-xs font-medium text-gray-600">終了時刻</label>
+              <input
+                type="time"
+                value={form.endTime}
+                onChange={(e) => setForm((prev) => ({ ...prev, endTime: e.target.value }))}
+                className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-sap-blue focus:outline-none"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="mb-0.5 block text-xs font-medium text-gray-600">説明</label>
             <textarea
@@ -172,6 +199,7 @@ export function OwnerEventAdmin({ currentUser }: { currentUser: SessionUser }) {
               className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-sap-blue focus:outline-none"
             />
           </div>
+
           <div className="flex gap-2">
             <button
               onClick={handleSave}
@@ -203,8 +231,9 @@ export function OwnerEventAdmin({ currentUser }: { currentUser: SessionUser }) {
                 <p className="font-medium text-gray-800">{e.title}</p>
                 <p className="text-xs text-gray-500">
                   {formatDate(e.date)}
-                  {e.timeLabel && ` ${e.timeLabel}`}
-                  {e.location && ` · ${e.location}`}
+                  {e.startTime && ` ${e.startTime}`}
+                  {e.endTime   && `〜${e.endTime}`}
+                  {e.location  && ` · ${e.location}`}
                 </p>
               </div>
               <button

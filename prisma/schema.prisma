@@ -84,8 +84,9 @@ model Achievement {
 model Event {
   id          String    @id @default(cuid())
   title       String
-  date        DateTime  // Event date (date part used for display & sorting)
-  timeLabel   String?   // e.g. "朝6:00〜"
+  date        DateTime  // Date in JST (stored as UTC midnight)
+  startTime   String?   // "HH:MM" in JST
+  endTime     String?   // "HH:MM" in JST
   location    String?
   description String?
   createdAt   DateTime  @default(now())

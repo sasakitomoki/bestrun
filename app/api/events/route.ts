@@ -4,8 +4,6 @@ import { isOwner } from "@/lib/owner";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/events?upcoming=true  → 今日以降のイベント一覧（参加者情報付き）
-// GET /api/events                → 全イベント（オーナー管理用）
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const upcoming = searchParams.get("upcoming") === "true";
@@ -29,20 +27,18 @@ export async function GET(req: Request) {
   return NextResponse.json(
     events.map((e) => ({
       ...e,
-      isAttending: userId
-        ? e.attendees.some((a) => a.userId === userId)
-        : false,
+      isAttending: userId ? e.attendees.some((a) => a.userId === userId) : false,
     }))
   );
 }
 
-// POST /api/events  → イベント作成（オーナーのみ）
 export async function POST(req: Request) {
   let body: {
     requesterName?: unknown;
     title?: unknown;
     date?: unknown;
-    timeLabel?: unknown;
+    startTime?: unknown;
+    endTime?: unknown;
     location?: unknown;
     description?: unknown;
   };
@@ -66,8 +62,9 @@ export async function POST(req: Request) {
     data: {
       title,
       date,
-      timeLabel: typeof body.timeLabel === "string" ? body.timeLabel.trim() || null : null,
-      location:  typeof body.location  === "string" ? body.location.trim()  || null : null,
+      startTime:   typeof body.startTime   === "string" ? body.startTime.trim()   || null : null,
+      endTime:     typeof body.endTime     === "string" ? body.endTime.trim()     || null : null,
+      location:    typeof body.location    === "string" ? body.location.trim()    || null : null,
       description: typeof body.description === "string" ? body.description.trim() || null : null,
     },
   });

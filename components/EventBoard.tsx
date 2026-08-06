@@ -15,7 +15,8 @@ type EventData = {
   id: string;
   title: string;
   date: string;
-  timeLabel: string | null;
+  startTime: string | null;
+  endTime: string | null;
   location: string | null;
   description: string | null;
   attendees: Attendee[];
@@ -67,10 +68,10 @@ function EventCard({
               <CalendarDays size={13} />
               {formatEventDate(event.date)}
             </span>
-            {event.timeLabel && (
+            {event.startTime && (
               <span className="flex items-center gap-1">
                 <Clock size={13} />
-                {event.timeLabel}
+                {event.startTime}{event.endTime ? `〜${event.endTime}` : "〜"}
               </span>
             )}
             {event.location && (

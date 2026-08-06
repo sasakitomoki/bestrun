@@ -13,7 +13,8 @@ export async function PATCH(
     requesterName?: unknown;
     title?: unknown;
     date?: unknown;
-    timeLabel?: unknown;
+    startTime?: unknown;
+    endTime?: unknown;
     location?: unknown;
     description?: unknown;
   };
@@ -33,8 +34,9 @@ export async function PATCH(
     data: {
       ...(title ? { title } : {}),
       ...(date && !isNaN(date.getTime()) ? { date } : {}),
-      ...(body.timeLabel !== undefined ? { timeLabel: (body.timeLabel as string) || null } : {}),
-      ...(body.location  !== undefined ? { location:  (body.location  as string) || null } : {}),
+      ...(body.startTime   !== undefined ? { startTime:   (body.startTime   as string) || null } : {}),
+      ...(body.endTime     !== undefined ? { endTime:     (body.endTime     as string) || null } : {}),
+      ...(body.location    !== undefined ? { location:    (body.location    as string) || null } : {}),
       ...(body.description !== undefined ? { description: (body.description as string) || null } : {}),
     },
   });
