@@ -6,6 +6,7 @@ import {
   UserCheck, Download, Plus, Pencil, Trash2, Check, X,
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
+import { ClickableAvatar } from "@/components/ClickableAvatar";
 import { useSession } from "@/lib/session";
 import { isOwner } from "@/lib/owner";
 
@@ -256,7 +257,7 @@ function EventCard({
       <div className="mt-2.5 flex items-center gap-2">
         <div className="flex -space-x-1.5">
           {event.attendees.slice(0, 4).map((a) => (
-            <Avatar key={a.id} photo={a.user.photo} name={a.user.name} size={20} className="ring-1 ring-white" />
+            <ClickableAvatar key={a.id} userId={a.user.id} photo={a.user.photo} name={a.user.name} size={20} className="ring-1 ring-white" />
           ))}
           {event.attendees.length > 4 && (
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-xs ring-1 ring-white">

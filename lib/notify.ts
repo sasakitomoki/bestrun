@@ -131,3 +131,35 @@ export async function notifyMonthlyRanking(params: {
     `　フル結果はこちら 👉 ${APP_URL}/ranking`,
   ]));
 }
+
+// #8 イベント追加（グループ）
+export async function notifyEventCreated(params: {
+  title: string;
+  date: string;       // ISO string
+  startTime: string | null;
+  endTime: string | null;
+  location: string | null;
+  description: string | null;
+}): Promise<void> {
+  const { title, date, startTime, endTime, location, description } = params;
+
+  const d = new Date(date);
+  const days = ["日","月","火","水","木","金","土"];
+  const dateLabel = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${days[d.getDay()]}）`;
+  const timeLabel = startTime
+    ? `${startTime}${endTime ? `〜${endTime}` : "〜"}`
+    : null;
+
+  const lines = [
+    `📅 新しいイベントが追加されました！`,
+    ``,
+    `　${title}`,
+    `　${dateLabel}${timeLabel ? `　${timeLabel}` : ""}`,
+    location    ? `　📍 ${location}` : null,
+    description ? `　${description}` : null,
+    ``,
+    `　👉 詳細・参加登録はこちら：${APP_URL}`,
+  ].filter((l): l is string => l !== null);
+
+  await sendMail(wrap(lines));
+}

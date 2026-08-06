@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Activity } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
+import { ClickableAvatar } from "@/components/ClickableAvatar";
 
 type ActivityItem = {
   id: string;
@@ -47,7 +48,7 @@ export function ActivityFeed() {
       <ul className="space-y-2.5">
         {items.map((item) => (
           <li key={item.id} className="flex items-center gap-3">
-            <Avatar photo={item.runner.photo} name={item.runner.name} size={32} />
+            <ClickableAvatar userId={item.runner.id} photo={item.runner.photo} name={item.runner.name} size={32} />
             <div className="flex-1 min-w-0">
               <span className="text-sm font-semibold text-sap-text-dark">{item.runner.name}</span>
               <span className="text-sm text-sap-text-mid">さんが</span>

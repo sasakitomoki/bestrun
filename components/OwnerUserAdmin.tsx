@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ShieldAlert, Trash2 } from "lucide-react";
+import { ShieldAlert, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { isOwner } from "@/lib/owner";
 import type { SessionUser } from "@/lib/session";
@@ -12,6 +12,7 @@ export function OwnerUserAdmin({ currentUser }: { currentUser: SessionUser }) {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -46,47 +47,57 @@ export function OwnerUserAdmin({ currentUser }: { currentUser: SessionUser }) {
   }
 
   return (
-    <div className="rounded-xl border border-red-200 bg-red-50 p-6 shadow-sm">
-      <h2 className="flex items-center gap-2 text-lg font-bold text-red-800">
-        <ShieldAlert size={18} />
-        ユーザー管理（オーナー専用）
-      </h2>
-      <p className="mt-1 text-sm text-red-600">
-        削除するとそのユーザーの全ランデータも消えます。
-      </p>
+    <div className="rounded-xl border border-red-200 bg-red-50 shadow-sm overflow-hidden">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between px-5 py-4 hover:bg-red-100/50"
+      >
+        <h2 className="flex items-center gap-2 text-base font-bold text-red-800">
+          <ShieldAlert size={16} />
+          ユーザー管理（オーナー専用）
+        </h2>
+        {open ? <ChevronUp size={16} className="text-red-400" /> : <ChevronDown size={16} className="text-red-400" />}
+      </button>
 
-      {loading ? (
-        <p className="mt-4 text-sm text-gray-500">読み込み中...</p>
-      ) : (
-        <ul className="mt-4 divide-y divide-red-100">
-          {users.map((u) => {
-            const isSelf = u.id === currentUser.id;
-            const ownerUser = isOwner(u.name);
-            return (
-              <li key={u.id} className="flex items-center gap-3 py-3">
-                <Avatar photo={u.photo} name={u.name} size={36} />
-                <span className="flex-1 font-medium text-gray-800">
-                  {u.name}
-                  {ownerUser && (
-                    <span className="ml-2 text-xs font-semibold text-brand">
-                      {isSelf ? "(オーナー・自分)" : "(オーナー)"}
+      {open && (
+        <div className="border-t border-red-200 px-5 pb-5 pt-3">
+          <p className="mb-3 text-sm text-red-600">
+            削除するとそのユーザーの全ランデータも消えます。
+          </p>
+          {loading ? (
+            <p className="text-sm text-gray-500">読み込み中...</p>
+          ) : (
+            <ul className="divide-y divide-red-100">
+              {users.map((u) => {
+                const isSelf = u.id === currentUser.id;
+                const ownerUser = isOwner(u.name);
+                return (
+                  <li key={u.id} className="flex items-center gap-3 py-3">
+                    <Avatar photo={u.photo} name={u.name} size={36} />
+                    <span className="flex-1 font-medium text-gray-800">
+                      {u.name}
+                      {ownerUser && (
+                        <span className="ml-2 text-xs font-semibold text-brand">
+                          {isSelf ? "(オーナー・自分)" : "(オーナー)"}
+                        </span>
+                      )}
                     </span>
-                  )}
-                </span>
-                {!ownerUser && (
-                  <button
-                    onClick={() => handleDelete(u)}
-                    disabled={deletingId === u.id}
-                    className="inline-flex items-center gap-1 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-100 disabled:opacity-50"
-                  >
-                    <Trash2 size={14} />
-                    削除
-                  </button>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                    {!ownerUser && (
+                      <button
+                        onClick={() => handleDelete(u)}
+                        disabled={deletingId === u.id}
+                        className="inline-flex items-center gap-1 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-100 disabled:opacity-50"
+                      >
+                        <Trash2 size={14} />
+                        削除
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       )}
     </div>
   );

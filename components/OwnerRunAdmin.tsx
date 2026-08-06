@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ShieldAlert, Pencil, Trash2, Check, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
+import { ClickableAvatar } from "@/components/ClickableAvatar";
 import type { SessionUser } from "@/lib/session";
 
 type RunStatus = "PENDING" | "APPROVED" | "REJECTED";
@@ -129,7 +130,7 @@ export function OwnerRunAdmin({
             return (
               <li key={run.id} className="py-3">
                 <div className="flex items-center gap-3">
-                  <Avatar photo={run.runner.photo} name={run.runner.name} size={32} />
+                  <ClickableAvatar userId={run.runner.id} photo={run.runner.photo} name={run.runner.name} size={32} />
                   <div className="min-w-0 flex-1 text-sm">
                     <span className="font-medium text-gray-800">{run.runner.name}</span>
                     <span className="mx-1 text-gray-400">·</span>

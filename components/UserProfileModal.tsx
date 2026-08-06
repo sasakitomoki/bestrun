@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { X, ZoomIn } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { BADGES, BADGE_MAP } from "@/lib/badges";
 import { MOTIVATIONS } from "@/components/StatusEditor";
@@ -33,6 +33,7 @@ export function UserProfileModal({
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [visible, setVisible] = useState(false);
+  const [photoZoom, setPhotoZoom] = useState(false);
 
   useEffect(() => {
     fetch(`/api/users/${userId}`)
@@ -87,8 +88,19 @@ export function UserProfileModal({
           <>
             {/* Header */}
             <div className="bg-gradient-to-br from-sap-shell to-gray-800 px-6 py-8 text-center">
-              <div className="mx-auto mb-3 inline-block">
-                <Avatar photo={profile.photo} name={profile.name} size={80} />
+              <div className="mx-auto mb-3 inline-block relative group">
+                <button
+                  onClick={() => profile.photo && setPhotoZoom(true)}
+                  className={`block rounded-full ${profile.photo ? "cursor-zoom-in" : "cursor-default"}`}
+                  title={profile.photo ? "タップで拡大" : undefined}
+                >
+                  <Avatar photo={profile.photo} name={profile.name} size={80} />
+                </button>
+                {profile.photo && (
+                  <span className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ZoomIn size={12} />
+                  </span>
+                )}
               </div>
               <h2 className="text-xl font-bold text-white">{profile.name}</h2>
               {selectedBadge && (
@@ -158,6 +170,27 @@ export function UserProfileModal({
           </div>
         )}
       </div>
+
+      {/* Photo zoom overlay */}
+      {photoZoom && profile?.photo && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80"
+          onClick={() => setPhotoZoom(false)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={profile.photo}
+            alt={profile.name}
+            className="max-h-[80vh] max-w-[80vw] rounded-2xl shadow-2xl"
+          />
+          <button
+            onClick={() => setPhotoZoom(false)}
+            className="absolute right-4 top-4 rounded-full bg-black/50 p-2 text-white hover:bg-black/70"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

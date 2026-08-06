@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isOwner } from "@/lib/owner";
+import { notifyEventCreated } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +69,16 @@ export async function POST(req: Request) {
       description: typeof body.description === "string" ? body.description.trim() || null : null,
     },
   });
+
+  // Notify group channel (non-blocking).
+  notifyEventCreated({
+    title: event.title,
+    date: event.date.toISOString(),
+    startTime: event.startTime,
+    endTime: event.endTime,
+    location: event.location,
+    description: event.description,
+  }).catch(() => {});
 
   return NextResponse.json(event, { status: 201 });
 }

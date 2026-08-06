@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Trophy } from "lucide-react";
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
+import { ClickableAvatar } from "@/components/ClickableAvatar";
 import { BADGE_MAP } from "@/lib/badges";
 import { currentMonthValue } from "@/lib/distance";
 
@@ -68,7 +69,7 @@ export function HomeRanking() {
               <li key={r.userId}
                 className={`flex items-center gap-3 rounded-lg border px-3 py-2 ${style.bg}`}>
                 <span className="text-xl w-6 text-center">{style.medal}</span>
-                <Avatar photo={r.photo} name={r.name} size={32} />
+                <ClickableAvatar userId={r.userId} photo={r.photo} name={r.name} size={32} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1">
                     <span className="text-sm font-bold text-sap-text-dark truncate">{r.name}</span>

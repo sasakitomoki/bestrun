@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Inbox, Check, X } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
+import { ClickableAvatar } from "@/components/ClickableAvatar";
 import { formatDistance } from "@/lib/distance";
 import type { SessionUser } from "@/lib/session";
 
@@ -89,7 +90,7 @@ export function ApprovalInbox({
               key={run.id}
               className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3"
             >
-              <Avatar photo={run.runner.photo} name={run.runner.name} size={40} />
+              <ClickableAvatar userId={run.runner.id} photo={run.runner.photo} name={run.runner.name} size={40} />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-gray-800">
                   {run.runner.name}

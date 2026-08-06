@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Trophy, Users, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
+import { ClickableAvatar } from "@/components/ClickableAvatar";
 import { BADGE_MAP } from "@/lib/badges";
 import { currentMonthValue } from "@/lib/distance";
 import { useSession } from "@/lib/session";
@@ -150,7 +151,7 @@ export function MonthlySummary() {
                   return (
                     <li key={r.userId} className={`flex items-center gap-2 rounded-lg px-2 py-1.5 ring-1 ${s.ring}`}>
                       <span className="text-base leading-none">{s.medal}</span>
-                      <Avatar photo={r.photo} name={r.name} size={22} />
+                      <ClickableAvatar userId={r.userId} photo={r.photo} name={r.name} size={22} currentUserId={user?.id} />
                       <span className="flex-1 truncate text-xs font-semibold text-sap-text-dark">{r.name}</span>
                       {badge && <span className="text-xs">{badge.icon}</span>}
                       <span className={`text-xs font-bold ${s.label}`}>{r.laps}周</span>
