@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { evaluateBadges, BADGE_MAP } from "@/lib/badges";
 import type { BadgeId } from "@/lib/badges";
-import { notifyRunApproved, notifyBadgeEarned, notifyRankingChanged } from "@/lib/notify";
+import { notifyBadgeEarned, notifyRankingChanged } from "@/lib/notify";
 import { lapsToKm, currentMonthValue, monthRange } from "@/lib/distance";
 
 export const dynamic = "force-dynamic";
@@ -101,42 +101,56 @@ export async function PATCH(req: Request) {
     ]);
 
     if (runner && approverUser) {
-      // #2 承認完了通知
-      notifyRunApproved({
-        approverName: approverUser.name,
-        runnerName: runner.name,
-        laps: run.laps,
-        km: lapsToKm(run.laps),
-        totalLaps,
-      }).catch(() => {});
-
       // #3 バッジ獲得通知
       if (toAward.length > 0) {
         const badges = toAward.map((id) => BADGE_MAP[id]).filter(Boolean);
         notifyBadgeEarned({ userName: runner.name, badges }).catch(() => {});
       }
 
-      // #4 首位交代通知（当月のランキングを再計算）
+      // #4 首位交代通知
+      // 承認後の全ランで集計し、「承認前の1位」と「承認後の1位」を比較。
+      // 異なるユーザーに入れ替わったときのみ通知する。
       const month = currentMonthValue();
       const range = monthRange(month)!;
       const monthRuns = await prisma.run.findMany({
         where: { status: "APPROVED", date: { gte: range.start, lt: range.end } },
         select: { runnerId: true, laps: true },
       });
-      const byUser = new Map<string, number>();
+
+      // 今回承認したランを除いた「承認前」のランキング
+      const beforeMap = new Map<string, number>();
       for (const r of monthRuns) {
-        byUser.set(r.runnerId, (byUser.get(r.runnerId) ?? 0) + r.laps);
-      }
-      const sorted = [...byUser.entries()].sort((a, b) => b[1] - a[1]);
-      if (sorted.length > 0 && sorted[0][0] === runnerId) {
-        // Runner is now #1 — notify only if they just moved into first place.
-        const wasFirst = sorted.length < 2 || sorted[1][0] === runnerId;
-        if (!wasFirst) {
-          notifyRankingChanged({
-            newLeaderName: runner.name,
-            laps: sorted[0][1],
-          }).catch(() => {});
+        if (r.runnerId === runnerId) {
+          // 今回分を差し引く
+          const prev = (beforeMap.get(r.runnerId) ?? 0) + r.laps;
+          beforeMap.set(r.runnerId, prev);
+        } else {
+          beforeMap.set(r.runnerId, (beforeMap.get(r.runnerId) ?? 0) + r.laps);
         }
+      }
+      // 今回のrunのlapsを差し引いて承認前の状態に戻す
+      const beforeRunnerLaps = (beforeMap.get(runnerId) ?? 0) - run.laps;
+      if (beforeRunnerLaps <= 0) {
+        beforeMap.delete(runnerId);
+      } else {
+        beforeMap.set(runnerId, beforeRunnerLaps);
+      }
+      const beforeLeader = [...beforeMap.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
+      // 承認後のランキング
+      const afterMap = new Map<string, number>();
+      for (const r of monthRuns) {
+        afterMap.set(r.runnerId, (afterMap.get(r.runnerId) ?? 0) + r.laps);
+      }
+      const afterSorted = [...afterMap.entries()].sort((a, b) => b[1] - a[1]);
+      const afterLeader = afterSorted[0]?.[0] ?? null;
+
+      // 1位が別のユーザーに入れ替わったときだけ通知
+      if (afterLeader === runnerId && afterLeader !== beforeLeader) {
+        notifyRankingChanged({
+          newLeaderName: runner.name,
+          laps: afterSorted[0][1],
+        }).catch(() => {});
       }
     }
   }
