@@ -3,6 +3,7 @@ import { Trophy, UserCircle } from "lucide-react";
 import { SapLogo } from "@/components/SapLogo";
 import { WeatherCard } from "@/components/WeatherCard";
 import { EventBoard } from "@/components/EventBoard";
+import { EventCalendar } from "@/components/EventCalendar";
 
 export default function HomePage() {
   return (
@@ -36,6 +37,7 @@ export default function HomePage() {
       </section>
 
       {/* Events */}
+      <EventCalendar />
       <EventBoard />
 
       {/* Weather */}
