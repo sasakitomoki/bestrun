@@ -36,11 +36,11 @@ function barColor(i: number) { return BAR_COLORS[i] ?? "#D0E9FF"; }
 const TOP3_STYLES = [
   {
     wrapper: "bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 p-[2px] rounded-2xl shadow-lg shadow-yellow-200",
-    inner:   "bg-gradient-to-br from-yellow-50 to-white rounded-2xl p-4",
+    inner:   "bg-gradient-to-br from-yellow-50 to-white rounded-2xl p-5",
     medal:   "🥇",
     rank:    "text-yellow-600",
     laps:    "text-yellow-700",
-    avatarSize: 64,
+    avatarSize: 72,
   },
   {
     wrapper: "bg-gradient-to-br from-gray-300 via-gray-400 to-gray-300 p-[2px] rounded-xl shadow-md shadow-gray-200",
@@ -77,28 +77,34 @@ function Top3Card({
         className={`${s.inner} cursor-pointer hover:brightness-95 transition-all`}
         onClick={onClick}
       >
-        <div className={`flex ${isFirst ? "flex-col items-center text-center gap-3" : "items-center gap-3"}`}>
+        {/* 全順位: 横並びで統一。1位は要素を少し大きく */}
+        <div className="flex items-center gap-3">
+          {/* アバター＋メダル */}
           <div className="relative shrink-0">
             <Avatar photo={r.photo} name={r.name} size={s.avatarSize} />
-            <span className={`absolute -bottom-1 -right-1 text-${isFirst ? "2xl" : "xl"} leading-none`}>
+            <span className={`absolute -bottom-1 -right-1 leading-none ${isFirst ? "text-2xl" : "text-xl"}`}>
               {s.medal}
             </span>
           </div>
-          <div className={`min-w-0 ${isFirst ? "w-full" : "flex-1"}`}>
-            <div className="flex items-center gap-1.5 justify-center sm:justify-start">
-              <p className={`font-bold text-sap-text-dark ${isFirst ? "text-lg" : "text-base"} truncate`}>
+
+          {/* 名前・バッジ・ステータス */}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <p className={`font-bold text-sap-text-dark truncate ${isFirst ? "text-lg" : "text-base"}`}>
                 {r.name}
               </p>
-              {badge && <span className="text-base leading-none">{badge.icon}</span>}
+              {badge && <span className="shrink-0 text-base leading-none">{badge.icon}</span>}
             </div>
             {motivationObj && (
-              <p className={`text-xs font-semibold text-sap-blue mt-0.5`}>{motivationObj.label}</p>
+              <p className="mt-0.5 text-xs font-semibold text-sap-blue">{motivationObj.label}</p>
             )}
             {r.statusMessage && (
-              <p className="truncate text-xs text-sap-text-mid mt-0.5">💬 {r.statusMessage}</p>
+              <p className="mt-0.5 truncate text-xs text-sap-text-mid">💬 {r.statusMessage}</p>
             )}
           </div>
-          <div className={`shrink-0 ${isFirst ? "text-center" : "text-right"}`}>
+
+          {/* 周回数 */}
+          <div className="shrink-0 text-right">
             <p className={`font-bold ${isFirst ? "text-2xl" : "text-xl"} ${s.laps}`}>{r.laps}周</p>
             <p className="text-xs text-sap-text-mid">{r.km}km</p>
           </div>
