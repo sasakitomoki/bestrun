@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { WeatherCard } from "@/components/WeatherCard";
-import { EventCalendar } from "@/components/EventCalendar";
-import { EventBoard } from "@/components/EventBoard";
+import { EventSection } from "@/components/EventSection";
 import { HomeRanking } from "@/components/HomeRanking";
 import { MyRankBanner } from "@/components/MyRankBanner";
 import { TeamStats } from "@/components/TeamStats";
@@ -28,22 +27,19 @@ export default function HomePage() {
       {/* ① 自分の現在順位（ログイン時のみ） */}
       <MyRankBanner />
 
-      {/* ② イベント告知 */}
-      <EventBoard />
-
-      {/* ③ カレンダー ＋ ランキングTop3 ＋ チーム累計 */}
-      <div className="grid gap-5 lg:grid-cols-2">
-        <EventCalendar />
+      {/* ② カレンダー ＋ イベントパネル ＋ ランキングTop3 ＋ チーム累計 */}
+      <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
+        <EventSection />
         <div className="space-y-5">
           <HomeRanking />
           <TeamStats />
         </div>
       </div>
 
-      {/* ④ 直近アクティビティ */}
+      {/* ③ 直近アクティビティ */}
       <ActivityFeed />
 
-      {/* ⑤ 天気 */}
+      {/* ④ 天気 */}
       <WeatherCard />
 
       {/* ⑥ 使い方ガイド（折りたたみ） */}
