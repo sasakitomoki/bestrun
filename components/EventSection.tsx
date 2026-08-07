@@ -285,7 +285,7 @@ function EventCard({
 
 // ─── Main: EventSection ───────────────────────────────────────────────────────
 export function EventSection() {
-  const { user } = useSession();
+  const { user, loading: sessionLoading } = useSession();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -298,12 +298,13 @@ export function EventSection() {
   const owner = isOwner(user?.name);
 
   const load = useCallback(async () => {
+    if (sessionLoading) return;
     const url = user ? `/api/events?userId=${user.id}` : "/api/events";
     try {
       const data = await fetch(url).then((r) => r.json());
       setEvents(Array.isArray(data) ? data : []);
     } catch { /* ignore */ }
-  }, [user]);
+  }, [user, sessionLoading]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -332,6 +333,8 @@ export function EventSection() {
       }
       return { ...e, isAttending: false, attendees: e.attendees.filter((a) => a.userId !== user?.id) };
     }));
+    // Re-fetch to sync with DB and replace the optimistic "tmp" attendee entry.
+    load();
   }
 
   function handleDelete(eventId: string) {

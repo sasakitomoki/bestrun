@@ -6,7 +6,7 @@ import { Avatar } from "@/components/Avatar";
 import { BADGE_MAP } from "@/lib/badges";
 
 type RankEntry = {
-  rank: number;
+  rank: number | null;
   userId: string;
   name: string;
   photo: string | null;
@@ -108,8 +108,9 @@ export function MonthlyRankingModal() {
     fetch(`/api/ranking?month=${prev.value}`)
       .then((r) => r.json())
       .then((data) => {
-        if (!data.ranking || data.ranking.length === 0) return;
-        setRanking(data.ranking.slice(0, 5));
+        const ranked = (data.ranking ?? []).filter((r: RankEntry) => r.laps > 0);
+        if (ranked.length === 0) return;
+        setRanking(ranked.slice(0, 5));
         setMonthLabel(prev.label);
         setShow(true);
         // Trigger enter animation after mount.
