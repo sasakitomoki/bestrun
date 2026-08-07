@@ -20,12 +20,12 @@ model User {
   motivation      String?  // Monthly motivation tag (e.g. "今月本気出す").
   createdAt    DateTime @default(now())
 
-  // Runs submitted by this user.
   runs           Run[]  @relation("Runner")
   runsToApprove  Run[]  @relation("Approver")
   goals          Goal[]
   achievements   Achievement[]
   eventAttendees EventAttendee[]
+  reactions      Reaction[]
 }
 
 enum RunStatus {
@@ -50,6 +50,8 @@ model Run {
 
   approverId String
   approver   User   @relation("Approver", fields: [approverId], references: [id], onDelete: Cascade)
+
+  reactions  Reaction[]
 
   @@index([status])
   @@index([approverId, status])
@@ -107,4 +109,18 @@ model EventAttendee {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, userId])
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  runId String
+  run   Run  @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, userId])
+  @@index([runId])
 }

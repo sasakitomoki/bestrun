@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Bar, BarChart, Cell, LabelList,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
-import { Trophy, BarChart2, List, Medal, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trophy, BarChart2, List, ChevronLeft, ChevronRight, Infinity as InfinityIcon } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { OwnerRunAdmin } from "@/components/OwnerRunAdmin";
 import { UserProfileModal } from "@/components/UserProfileModal";
@@ -27,6 +27,8 @@ type RankingEntry = {
   km: number;
   runCount: number;
 };
+
+type AllTimeEntry = RankingEntry & { activeMonths: number };
 
 // ─── Bar chart colors ────────────────────────────────────────────────────────
 const BAR_COLORS = ["#0070F2", "#5AACFF", "#A8D4FF", "#D0E9FF"];
@@ -170,11 +172,12 @@ function RankRow({ r, index, onClick }: { r: RankingEntry; index: number; onClic
 const INITIAL_SHOW = 3;
 
 function CollapsibleRankList({
-  items, label, onClickItem,
+  items, label, onClickItem, renderRow,
 }: {
   items: RankingEntry[];
   label: string;
   onClickItem: (userId: string) => void;
+  renderRow?: (r: RankingEntry, onClick: () => void) => React.ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
   if (items.length === 0) return null;
@@ -187,9 +190,13 @@ function CollapsibleRankList({
         {label}
       </p>
       <ol className="space-y-2">
-        {visible.map((r, i) => (
-          <RankRow key={r.userId} r={r} index={i} onClick={() => onClickItem(r.userId)} />
-        ))}
+        {visible.map((r, i) =>
+          renderRow ? (
+            renderRow(r, () => onClickItem(r.userId))
+          ) : (
+            <RankRow key={r.userId} r={r} index={i} onClick={() => onClickItem(r.userId)} />
+          )
+        )}
       </ol>
       {items.length > INITIAL_SHOW && (
         <button
@@ -204,20 +211,76 @@ function CollapsibleRankList({
 }
 
 
+// ─── AllTime rank row ─────────────────────────────────────────────────────────
+function AllTimeRankRow({ r, onClick }: { r: AllTimeEntry; onClick: () => void }) {
+  const badge = r.selectedBadgeId ? BADGE_MAP[r.selectedBadgeId as keyof typeof BADGE_MAP] : null;
+  const motivationObj = MOTIVATIONS.find((m) => m.value === r.motivation);
+  const isZero = r.rank === null;
+  const medals = ["🥇", "🥈", "🥉"];
+
+  return (
+    <li
+      onClick={onClick}
+      className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 shadow-sm transition-colors hover:border-sap-blue/40 hover:bg-sap-blue-light ${
+        isZero ? "border-gray-100 bg-gray-50 opacity-60" : "border-gray-200 bg-white"
+      }`}
+    >
+      <div className="flex w-7 shrink-0 justify-center">
+        {isZero ? (
+          <span className="text-base font-bold text-gray-300">—</span>
+        ) : r.rank! <= 3 ? (
+          <span className="text-xl">{medals[r.rank! - 1]}</span>
+        ) : (
+          <span className="text-base font-bold text-gray-500">{r.rank}</span>
+        )}
+      </div>
+      <Avatar photo={r.photo} name={r.name} size={38} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <p className="truncate text-sm font-bold text-gray-900">{r.name}</p>
+          {badge && <span className="text-sm leading-none">{badge.icon}</span>}
+        </div>
+        {motivationObj && (
+          <p className="text-xs font-semibold text-sap-blue">{motivationObj.label}</p>
+        )}
+        {!motivationObj && (
+          <p className="text-xs text-gray-400">
+            {isZero ? "まだ記録なし" : `${r.runCount}回 / ${r.activeMonths}ヶ月`}
+          </p>
+        )}
+      </div>
+      <div className="text-right shrink-0">
+        {isZero ? (
+          <p className="text-sm font-bold text-gray-300">0周</p>
+        ) : (
+          <>
+            <p className="text-base font-bold text-sap-blue">{r.laps}周</p>
+            <p className="text-xs text-gray-400">{r.km}km</p>
+          </>
+        )}
+      </div>
+    </li>
+  );
+}
+
 export default function RankingPage() {
   const { user } = useSession();
   const months = useMemo(() => recentMonths(12), []);
-  const [monthIdx, setMonthIdx] = useState(0); // 0 = current month
+  const [monthIdx, setMonthIdx] = useState(0);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
+  const [allTimeRanking, setAllTimeRanking] = useState<AllTimeEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [rankingKey, setRankingKey] = useState(0);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "chart">("list");
+  const [period, setPeriod] = useState<"monthly" | "alltime">("monthly");
 
   const month = months[monthIdx]?.value ?? currentMonthValue();
   const monthLabel = months[monthIdx]?.label ?? month;
 
+  // Monthly ranking
   useEffect(() => {
+    if (period !== "monthly") return;
     let active = true;
     setLoading(true);
     fetch(`/api/ranking?month=${month}`)
@@ -226,13 +289,32 @@ export default function RankingPage() {
       .catch(() => {})
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [month, rankingKey]);
+  }, [month, rankingKey, period]);
+
+  // All-time ranking
+  useEffect(() => {
+    if (period !== "alltime") return;
+    let active = true;
+    setLoading(true);
+    fetch("/api/ranking/all")
+      .then((r) => r.json())
+      .then((d) => { if (active) setAllTimeRanking(d.ranking ?? []); })
+      .catch(() => {})
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [period, rankingKey]);
 
   const ranked = ranking.filter((r) => r.rank !== null && r.laps > 0);
   const top3 = ranked.slice(0, 3);
   const rest = ranked.slice(3);
   const zeroLap = ranking.filter((r) => r.rank === null);
-  const chartData = ranked.map((r) => ({ name: r.name, laps: r.laps, km: r.km }));
+  const chartData = (period === "alltime"
+    ? allTimeRanking.filter((r) => r.laps > 0)
+    : ranked
+  ).map((r) => ({ name: r.name, laps: r.laps, km: r.km }));
+
+  const allTimeRanked = allTimeRanking.filter((r) => r.laps > 0);
+  const allTimeZero = allTimeRanking.filter((r) => r.laps === 0);
 
   return (
     <div className="space-y-5">
@@ -241,7 +323,7 @@ export default function RankingPage() {
         <div className="flex items-center justify-between bg-sap-shell px-4 py-3">
           <span className="flex items-center gap-2 text-sm font-bold text-white">
             <Trophy size={15} className="text-yellow-400" />
-            月間ランキング
+            {period === "monthly" ? "月間ランキング" : "全期間ランキング"}
           </span>
           {/* View toggle */}
           <div className="flex items-center gap-1 rounded-lg bg-white/10 p-1">
@@ -263,87 +345,144 @@ export default function RankingPage() {
             </button>
           </div>
         </div>
-        {/* Month navigation */}
-        <div className="flex items-center justify-between border-t border-gray-100 px-4 py-2">
+
+        {/* Period tabs */}
+        <div className="flex border-b border-gray-100">
           <button
-            onClick={() => setMonthIdx((i) => Math.min(i + 1, months.length - 1))}
-            disabled={monthIdx >= months.length - 1}
-            className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-30"
+            onClick={() => setPeriod("monthly")}
+            className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${
+              period === "monthly"
+                ? "border-b-2 border-sap-blue text-sap-blue"
+                : "text-gray-500 hover:text-sap-blue"
+            }`}
           >
-            <ChevronLeft size={18} />
+            月別
           </button>
-          <span className="text-sm font-semibold text-sap-text-dark">{monthLabel}</span>
           <button
-            onClick={() => setMonthIdx((i) => Math.max(i - 1, 0))}
-            disabled={monthIdx <= 0}
-            className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-30"
+            onClick={() => setPeriod("alltime")}
+            className={`flex-1 flex items-center justify-center gap-1 py-2.5 text-xs font-semibold transition-colors ${
+              period === "alltime"
+                ? "border-b-2 border-sap-blue text-sap-blue"
+                : "text-gray-500 hover:text-sap-blue"
+            }`}
           >
-            <ChevronRight size={18} />
+            <InfinityIcon size={12} />全期間
           </button>
         </div>
+
+        {/* Month navigation — only for monthly */}
+        {period === "monthly" && (
+          <div className="flex items-center justify-between px-4 py-2">
+            <button
+              onClick={() => setMonthIdx((i) => Math.min(i + 1, months.length - 1))}
+              disabled={monthIdx >= months.length - 1}
+              className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-30"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <span className="text-sm font-semibold text-sap-text-dark">{monthLabel}</span>
+            <button
+              onClick={() => setMonthIdx((i) => Math.max(i - 1, 0))}
+              disabled={monthIdx <= 0}
+              className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-30"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
       </div>
 
       {loading ? (
         <div className="space-y-3">
           {[1,2,3].map((i) => <div key={i} className="h-20 rounded-xl bg-gray-100 animate-pulse" />)}
         </div>
-      ) : ranking.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white py-16 text-center">
-          <p className="text-gray-500">{monthLabel} の承認済み実績はまだありません。</p>
-        </div>
       ) : view === "chart" ? (
         /* ── Graph view ── */
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold text-gray-500">
-            {monthLabel} の周回数（承認済み）
+            {period === "monthly" ? `${monthLabel} の周回数（承認済み）` : "全期間累計周回数"}
           </h2>
-          <div style={{ width: "100%", height: Math.max(200, chartData.length * 56) }}>
-            <ResponsiveContainer>
-              <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 48, bottom: 4, left: 8 }}>
-                <XAxis type="number" hide />
-                <YAxis type="category" dataKey="name" width={80} tickLine={false} axisLine={false}
-                  tick={{ fontSize: 13, fill: "#374151" }} />
-                <Tooltip cursor={{ fill: "rgba(0,0,0,0.04)" }}
-                  formatter={(v: number, _n, item) => [`${v}周 (${item.payload.km}km)`, "周回数"]} />
-                <Bar dataKey="laps" radius={[0, 6, 6, 0]} barSize={28}>
-                  {chartData.map((_, i) => <Cell key={i} fill={barColor(i)} />)}
-                  <LabelList dataKey="laps" position="right" formatter={(v: number) => `${v}周`}
-                    style={{ fontSize: 12, fill: "#374151", fontWeight: 600 }} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      ) : (
-        /* ── List view ── */
-        <div className="space-y-5">
-          {/* Top 3 fancy cards */}
-          {top3.length > 0 && (
-            <div className="space-y-3">
-              {top3.map((r, i) => (
-                <Top3Card key={r.userId} r={r} styleIdx={i}
-                  onClick={() => setSelectedUserId(r.userId)} />
-              ))}
+          {chartData.length === 0 ? (
+            <p className="text-center text-sm text-gray-400 py-8">データがありません</p>
+          ) : (
+            <div style={{ width: "100%", height: Math.max(200, chartData.length * 56) }}>
+              <ResponsiveContainer>
+                <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 48, bottom: 4, left: 8 }}>
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="name" width={80} tickLine={false} axisLine={false}
+                    tick={{ fontSize: 13, fill: "#374151" }} />
+                  <Tooltip cursor={{ fill: "rgba(0,0,0,0.04)" }}
+                    formatter={(v: number, _n, item) => [`${v}周 (${item.payload.km}km)`, "周回数"]} />
+                  <Bar dataKey="laps" radius={[0, 6, 6, 0]} barSize={28}>
+                    {chartData.map((_, i) => <Cell key={i} fill={barColor(i)} />)}
+                    <LabelList dataKey="laps" position="right" formatter={(v: number) => `${v}周`}
+                      style={{ fontSize: 12, fill: "#374151", fontWeight: 600 }} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           )}
-
-          {/* 4th and below */}
+        </div>
+      ) : period === "alltime" ? (
+        /* ── All-time list ── */
+        <div className="space-y-5">
+          {allTimeRanked.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-gray-300 bg-white py-16 text-center">
+              <p className="text-gray-500">まだ承認済みの記録がありません。</p>
+            </div>
+          ) : (
+            <CollapsibleRankList
+              items={allTimeRanked.map((r) => r as RankingEntry)}
+              label="全期間累計"
+              onClickItem={setSelectedUserId}
+              renderRow={(r, onClick) => (
+                <AllTimeRankRow
+                  key={r.userId}
+                  r={allTimeRanked.find((a) => a.userId === r.userId)!}
+                  onClick={onClick}
+                />
+              )}
+            />
+          )}
           <CollapsibleRankList
-            items={rest}
-            label={top3.length > 0 ? "4位以下" : "ランキング"}
+            items={allTimeZero.map((r) => r as RankingEntry)}
+            label="まだ走っていない"
             onClickItem={setSelectedUserId}
           />
-
-          {/* Zero-lap users */}
-          <CollapsibleRankList
-            items={zeroLap}
-            label="今月まだ走っていない"
-            onClickItem={setSelectedUserId}
-          />
+        </div>
+      ) : (
+        /* ── Monthly list ── */
+        <div className="space-y-5">
+          {ranking.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-gray-300 bg-white py-16 text-center">
+              <p className="text-gray-500">{monthLabel} の承認済み実績はまだありません。</p>
+            </div>
+          ) : (
+            <>
+              {top3.length > 0 && (
+                <div className="space-y-3">
+                  {top3.map((r, i) => (
+                    <Top3Card key={r.userId} r={r} styleIdx={i}
+                      onClick={() => setSelectedUserId(r.userId)} />
+                  ))}
+                </div>
+              )}
+              <CollapsibleRankList
+                items={rest}
+                label={top3.length > 0 ? "4位以下" : "ランキング"}
+                onClickItem={setSelectedUserId}
+              />
+              <CollapsibleRankList
+                items={zeroLap}
+                label="今月まだ走っていない"
+                onClickItem={setSelectedUserId}
+              />
+            </>
+          )}
         </div>
       )}
 
-      {user && isOwner(user.name) && (
+      {user && isOwner(user.name) && period === "monthly" && (
         <OwnerRunAdmin currentUser={user} month={month}
           onChanged={() => setRankingKey((k) => k + 1)} />
       )}

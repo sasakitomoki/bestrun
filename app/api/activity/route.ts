@@ -3,11 +3,12 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/activity?limit=5
-// Returns recent approved runs with runner info.
+// GET /api/activity?limit=5&userId=...
+// Returns recent approved runs with runner info and reaction counts.
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const limit = Math.min(Number(searchParams.get("limit") ?? 5), 20);
+  const userId = searchParams.get("userId") ?? null;
 
   const runs = await prisma.run.findMany({
     where: { status: "APPROVED" },
@@ -19,8 +20,19 @@ export async function GET(req: Request) {
       date: true,
       createdAt: true,
       runner: { select: { id: true, name: true, photo: true } },
+      reactions: { select: { userId: true } },
     },
   });
 
-  return NextResponse.json(runs);
+  return NextResponse.json(
+    runs.map((r) => ({
+      id: r.id,
+      laps: r.laps,
+      date: r.date,
+      createdAt: r.createdAt,
+      runner: r.runner,
+      reactionCount: r.reactions.length,
+      myReaction: userId ? r.reactions.some((rx) => rx.userId === userId) : false,
+    }))
+  );
 }
