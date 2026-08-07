@@ -21,14 +21,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "自分のランには称賛できません。" }, { status: 400 });
   }
 
-  await prisma.reaction.upsert({
-    where: { runId_userId: { runId, userId } },
-    create: { runId, userId },
-    update: {},
-  });
-
-  const count = await prisma.reaction.count({ where: { runId } });
-  return NextResponse.json({ count }, { status: 201 });
+  try {
+    await prisma.reaction.upsert({
+      where: { runId_userId: { runId, userId } },
+      create: { runId, userId },
+      update: {},
+    });
+    const count = await prisma.reaction.count({ where: { runId } });
+    return NextResponse.json({ count }, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "称賛機能は現在利用できません。" }, { status: 503 });
+  }
 }
 
 // DELETE /api/reactions?runId=...&userId=... → remove reaction
@@ -40,7 +43,11 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "runId と userId が必要です。" }, { status: 400 });
   }
 
-  await prisma.reaction.deleteMany({ where: { runId, userId } });
-  const count = await prisma.reaction.count({ where: { runId } });
-  return NextResponse.json({ count });
+  try {
+    await prisma.reaction.deleteMany({ where: { runId, userId } });
+    const count = await prisma.reaction.count({ where: { runId } });
+    return NextResponse.json({ count });
+  } catch {
+    return NextResponse.json({ error: "称賛機能は現在利用できません。" }, { status: 503 });
+  }
 }
