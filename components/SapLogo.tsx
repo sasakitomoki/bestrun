@@ -16,7 +16,7 @@ export function SapLogo({ size = 32 }: { size?: number }) {
       viewBox="-8 -4 225 108"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="SAP"
+      aria-label="8AP"
       role="img"
       style={{ overflow: "visible" }}
     >
@@ -34,7 +34,7 @@ export function SapLogo({ size = 32 }: { size?: number }) {
         fontSize="68"
         fill="#ffffff"
       >
-        SAP
+        8AP
       </text>
     </svg>
   );
