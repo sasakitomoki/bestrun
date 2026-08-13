@@ -1,5 +1,5 @@
 // Prisma schema for the Kokyo Run (皇居ラン) ranking app.
-// Database: PostgreSQL (Render.com).
+// Database: PostgreSQL (Supabase — Direct connection, port 5432).
 
 generator client {
   provider = "prisma-client-js"
