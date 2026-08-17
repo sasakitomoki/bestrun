@@ -61,11 +61,10 @@ export async function POST(req: Request) {
   const { name, photo, totalLaps } = champion;
 
   const heroPrompt =
-    `Take this photo and make the person look like an undisputed champion and king. ` +
-    `Add dramatic cinematic lighting with golden hour glow, powerful confident expression, ` +
-    `majestic atmosphere, subtle golden crown or laurel wreath, rich dramatic background, ` +
-    `epic movie poster feel, deep shadows and highlights, aura of absolute victory. ` +
-    `Preserve the person's face, clothing and original setting as much as possible.`;
+    `Portrait of the same person, champion of the month, ` +
+    `dramatic golden cinematic lighting, royal and majestic atmosphere, ` +
+    `golden glow around the person, winner's aura, confident expression, ` +
+    `epic movie poster style lighting, photorealistic, high quality`;
 
   let imageUrl: string | undefined;
 
@@ -74,23 +73,25 @@ export async function POST(req: Request) {
 
   try {
     if (useImgToImg) {
-      // img2img with low strength to preserve background, clothes and face while transforming to victory scene
-      const res = await fetch("https://fal.run/fal-ai/flux/dev/image-to-image", {
+      // PuLID: face-identity-preserving generation
+      const res = await fetch("https://fal.run/fal-ai/pulid", {
         method: "POST",
         headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          image_url: photo,
           prompt: heroPrompt,
-          strength: 0.42,
-          num_inference_steps: 35,
+          reference_image_url: photo,
+          negative_prompt: "blurry, bad quality, distorted face, deformed, different person",
+          num_inference_steps: 30,
           guidance_scale: 4.5,
+          id_scale: 1.0,
+          image_size: "portrait_4_3",
           num_images: 1,
         }),
       });
       const text = await res.text();
       if (!res.ok) {
-        console.error("[generate-hero] img2img error:", res.status, text);
-        return NextResponse.json({ error: `fal.ai img2img error ${res.status}: ${text}` }, { status: 500 });
+        console.error("[generate-hero] PuLID error:", res.status, text);
+        return NextResponse.json({ error: `fal.ai PuLID error ${res.status}: ${text}` }, { status: 500 });
       }
       const data = JSON.parse(text);
       imageUrl = data.images?.[0]?.url;
