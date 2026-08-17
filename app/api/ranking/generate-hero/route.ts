@@ -73,22 +73,26 @@ export async function POST(req: Request) {
 
   try {
     if (useImgToImg) {
-      const res = await fetch("https://fal.run/fal-ai/flux/dev/image-to-image", {
+      // InstantID: preserves face identity while applying dramatic style
+      const res = await fetch("https://fal.run/fal-ai/instant-id", {
         method: "POST",
         headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          image_url: photo,
+          face_image_url: photo,
           prompt: heroPrompt,
-          strength: 0.78,
-          num_inference_steps: 28,
-          guidance_scale: 3.5,
+          negative_prompt: "blurry, bad quality, distorted face, deformed, ugly, low resolution",
+          image_size: "portrait_4_3",
+          num_inference_steps: 30,
+          guidance_scale: 5.0,
+          ip_adapter_scale: 0.8,
+          controlnet_conditioning_scale: 0.8,
           num_images: 1,
         }),
       });
       const text = await res.text();
       if (!res.ok) {
-        console.error("[generate-hero] img2img error:", res.status, text);
-        return NextResponse.json({ error: `fal.ai img2img error ${res.status}: ${text}` }, { status: 500 });
+        console.error("[generate-hero] InstantID error:", res.status, text);
+        return NextResponse.json({ error: `fal.ai InstantID error ${res.status}: ${text}` }, { status: 500 });
       }
       const data = JSON.parse(text);
       imageUrl = data.images?.[0]?.url;
