@@ -61,9 +61,10 @@ export async function POST(req: Request) {
   const { name, photo, totalLaps } = champion;
 
   const heroPrompt =
-    `Portrait of the same person, champion of the month, ` +
+    `The same person as in the reference photo, champion of the month, ` +
+    `same clothing and background as original, ` +
     `dramatic golden cinematic lighting, royal and majestic atmosphere, ` +
-    `golden glow around the person, winner's aura, confident expression, ` +
+    `golden glow, winner's aura, confident expression, ` +
     `epic movie poster style lighting, photorealistic, high quality`;
 
   let imageUrl: string | undefined;
@@ -119,25 +120,24 @@ export async function POST(req: Request) {
 
   try {
     if (faceUrl) {
-      // PuLID: face-identity-preserving generation using uploaded face photo
-      const res = await fetch("https://fal.run/fal-ai/pulid", {
+      // img2img: preserves composition, clothing, background from original photo
+      const res = await fetch("https://fal.run/fal-ai/flux/dev/image-to-image", {
         method: "POST",
         headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: heroPrompt,
-          reference_images: [{ image_url: faceUrl }],
+          image_url: faceUrl,
+          strength: 0.45,
           negative_prompt: "blurry, bad quality, distorted face, deformed, different person",
-          num_inference_steps: 12,
-          guidance_scale: 1.5,
-          id_scale: 1.0,
-          image_size: "portrait_4_3",
+          num_inference_steps: 28,
+          guidance_scale: 3.5,
           num_images: 1,
         }),
       });
       const text = await res.text();
       if (!res.ok) {
-        console.error("[generate-hero] PuLID error:", res.status, text);
-        return NextResponse.json({ error: `fal.ai PuLID error ${res.status}: ${text}` }, { status: 500 });
+        console.error("[generate-hero] img2img error:", res.status, text);
+        return NextResponse.json({ error: `fal.ai img2img error ${res.status}: ${text}` }, { status: 500 });
       }
       const data = JSON.parse(text);
       imageUrl = data.images?.[0]?.url;
