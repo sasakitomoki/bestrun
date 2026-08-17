@@ -4,7 +4,6 @@ import { isOwner } from "@/lib/owner";
 import { monthRange, currentMonthValue } from "@/lib/distance";
 
 export const dynamic = "force-dynamic";
-// fal.ai generation can take up to 60s
 export const maxDuration = 60;
 
 const FAL_KEY = process.env.FAL_KEY ?? "";
@@ -14,7 +13,6 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const month = searchParams.get("month") ?? "";
   if (!month) return NextResponse.json({ hero: null });
-
   try {
     const hero = await prisma.monthlyHero.findUnique({ where: { month } });
     return NextResponse.json({ hero });
@@ -24,7 +22,6 @@ export async function GET(req: Request) {
 }
 
 // POST /api/ranking/generate-hero  body: { requesterName, month? }
-// Generates an AI hero image for the #1 user of the given month and saves it.
 export async function POST(req: Request) {
   let body: { requesterName?: unknown; month?: unknown };
   try { body = await req.json(); }
@@ -35,7 +32,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "オーナーのみ実行できます。" }, { status: 403 });
   }
   if (!FAL_KEY) {
-    return NextResponse.json({ error: "FAL_KEY が設定されていません。" }, { status: 500 });
+    return NextResponse.json({ error: "FAL_KEY が設定されていません。Renderの環境変数を確認してください。" }, { status: 500 });
   }
 
   const month = typeof body.month === "string" ? body.month : currentMonthValue();
@@ -64,56 +61,40 @@ export async function POST(req: Request) {
   const { name, photo, totalLaps } = champion;
 
   const heroPrompt =
-    `Epic award ceremony portrait. The monthly champion runner at the Imperial Palace Tokyo. ` +
-    `Golden trophy, dramatic cinematic lighting, blue and gold color theme, confetti falling, ` +
-    `stadium spotlights, heroic pose, shallow depth of field, 8K photorealistic, ` +
+    `Epic award ceremony portrait, monthly champion runner at the Imperial Palace Tokyo, ` +
+    `golden trophy, dramatic cinematic lighting, blue and gold color theme, confetti falling, ` +
+    `stadium spotlights, heroic pose, shallow depth of field, photorealistic, ` +
     `professional sports photography, award ceremony atmosphere`;
 
   let imageUrl: string | undefined;
 
-  try {
-    // Upload base64 photo to fal.ai storage so it can be used as img2img reference
-    let imageInputUrl: string | null = null;
-    if (photo) {
-      if (photo.startsWith("http")) {
-        imageInputUrl = photo;
-      } else if (photo.startsWith("data:image/")) {
-        // Upload base64 photo to fal.ai storage
-        const base64Data = photo.replace(/^data:image\/\w+;base64,/, "");
-        const contentType = photo.match(/^data:(image\/\w+);/)?.[1] ?? "image/jpeg";
-        const uploadRes = await fetch("https://rest.alpha.fal.ai/storage/upload/base64", {
-          method: "POST",
-          headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ content_type: contentType, data: base64Data }),
-        });
-        if (uploadRes.ok) {
-          const uploadData = await uploadRes.json();
-          imageInputUrl = uploadData.url ?? null;
-        }
-      }
-    }
+  // Use img2img only when photo is an accessible HTTP URL; otherwise text2img.
+  const useImgToImg = !!photo && photo.startsWith("http");
 
-    if (imageInputUrl) {
-      // img2img: style-transfer the user's photo into a champion portrait
+  try {
+    if (useImgToImg) {
       const res = await fetch("https://fal.run/fal-ai/flux/dev/image-to-image", {
         method: "POST",
         headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          image_url: imageInputUrl,
+          image_url: photo,
           prompt: heroPrompt,
           strength: 0.78,
           num_inference_steps: 28,
           guidance_scale: 3.5,
           num_images: 1,
-          enable_safety_checker: false,
         }),
       });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
+      const text = await res.text();
+      if (!res.ok) {
+        console.error("[generate-hero] img2img error:", res.status, text);
+        return NextResponse.json({ error: `fal.ai img2img error ${res.status}: ${text}` }, { status: 500 });
+      }
+      const data = JSON.parse(text);
       imageUrl = data.images?.[0]?.url;
     } else {
-      // text2img fallback when no photo available
-      const res = await fetch("https://fal.run/fal-ai/flux-pro/v1.1", {
+      // text2img — works when photo is absent or a data URL
+      const res = await fetch("https://fal.run/fal-ai/flux/dev", {
         method: "POST",
         headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -124,17 +105,21 @@ export async function POST(req: Request) {
           num_images: 1,
         }),
       });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
+      const text = await res.text();
+      if (!res.ok) {
+        console.error("[generate-hero] text2img error:", res.status, text);
+        return NextResponse.json({ error: `fal.ai text2img error ${res.status}: ${text}` }, { status: 500 });
+      }
+      const data = JSON.parse(text);
       imageUrl = data.images?.[0]?.url;
     }
   } catch (err) {
-    console.error("[generate-hero] fal.ai error:", err);
-    return NextResponse.json({ error: "画像生成に失敗しました。" }, { status: 500 });
+    console.error("[generate-hero] fetch error:", err);
+    return NextResponse.json({ error: `通信エラー: ${String(err)}` }, { status: 500 });
   }
 
   if (!imageUrl) {
-    return NextResponse.json({ error: "画像URLが取得できませんでした。" }, { status: 500 });
+    return NextResponse.json({ error: "画像URLが取得できませんでした。fal.aiのレスポンス形式を確認してください。" }, { status: 500 });
   }
 
   const hero = await prisma.monthlyHero.upsert({
