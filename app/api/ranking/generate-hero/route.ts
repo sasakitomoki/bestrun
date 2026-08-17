@@ -61,10 +61,13 @@ export async function POST(req: Request) {
   const { name, photo, totalLaps } = champion;
 
   const heroPrompt =
-    `Epic award ceremony portrait, monthly champion runner at the Imperial Palace Tokyo, ` +
-    `golden trophy, dramatic cinematic lighting, blue and gold color theme, confetti falling, ` +
-    `stadium spotlights, heroic pose, shallow depth of field, photorealistic, ` +
-    `professional sports photography, award ceremony atmosphere`;
+    `Transform this photo into an epic running champion victory scene. ` +
+    `The person has just crossed the finish line in first place at the Imperial Palace Tokyo running course. ` +
+    `Arms raised triumphantly, golden championship medal around their neck, ` +
+    `golden confetti raining down, roaring crowd in background, ` +
+    `dramatic stadium spotlights, motion blur on background for speed effect, ` +
+    `"1st PLACE" banner visible, cinematic sports photography lighting, ` +
+    `keep the person's face, outfit and surroundings recognizable but transform the atmosphere to a winner's celebration`;
 
   let imageUrl: string | undefined;
 
@@ -73,26 +76,23 @@ export async function POST(req: Request) {
 
   try {
     if (useImgToImg) {
-      // InstantID: preserves face identity while applying dramatic style
-      const res = await fetch("https://fal.run/fal-ai/instant-id", {
+      // img2img with low strength to preserve background, clothes and face while transforming to victory scene
+      const res = await fetch("https://fal.run/fal-ai/flux/dev/image-to-image", {
         method: "POST",
         headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          face_image_url: photo,
+          image_url: photo,
           prompt: heroPrompt,
-          negative_prompt: "blurry, bad quality, distorted face, deformed, ugly, low resolution",
-          image_size: "portrait_4_3",
-          num_inference_steps: 30,
-          guidance_scale: 5.0,
-          ip_adapter_scale: 0.95,
-          controlnet_conditioning_scale: 0.95,
+          strength: 0.55,
+          num_inference_steps: 35,
+          guidance_scale: 4.5,
           num_images: 1,
         }),
       });
       const text = await res.text();
       if (!res.ok) {
-        console.error("[generate-hero] InstantID error:", res.status, text);
-        return NextResponse.json({ error: `fal.ai InstantID error ${res.status}: ${text}` }, { status: 500 });
+        console.error("[generate-hero] img2img error:", res.status, text);
+        return NextResponse.json({ error: `fal.ai img2img error ${res.status}: ${text}` }, { status: 500 });
       }
       const data = JSON.parse(text);
       imageUrl = data.images?.[0]?.url;
