@@ -85,18 +85,25 @@ export async function POST(req: Request) {
           `https://rest.alpha.fal.ai/storage/upload/initiate?content_type=${encodeURIComponent(contentType)}&extension=${ext}`,
           { headers: { "Authorization": `Key ${FAL_KEY}` } }
         );
+        console.log("[generate-hero] initiate status:", initRes.status);
         if (initRes.ok) {
-          const { upload_url, file_url } = await initRes.json();
+          const initJson = await initRes.json();
+          console.log("[generate-hero] initiate response:", JSON.stringify(initJson));
+          const { upload_url, file_url } = initJson;
           const buf = Buffer.from(base64Data, "base64");
           const putRes = await fetch(upload_url, {
             method: "PUT",
             headers: { "Content-Type": contentType },
             body: buf,
           });
+          console.log("[generate-hero] PUT status:", putRes.status);
           if (putRes.ok) {
             faceUrl = file_url;
             console.log("[generate-hero] uploaded base64 photo →", faceUrl);
           }
+        } else {
+          const errText = await initRes.text();
+          console.error("[generate-hero] initiate failed:", initRes.status, errText);
         }
       } catch (e) {
         console.error("[generate-hero] photo upload failed:", e);
