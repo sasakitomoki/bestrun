@@ -68,18 +68,53 @@ export async function POST(req: Request) {
 
   let imageUrl: string | undefined;
 
-  // Use img2img only when photo is an accessible HTTP URL; otherwise text2img.
-  const useImgToImg = !!photo && photo.startsWith("http");
+  // Resolve photo to an HTTP URL that fal.ai can fetch.
+  // If stored as base64 data URL, upload to fal.ai storage first.
+  let faceUrl: string | null = null;
+  if (photo) {
+    if (photo.startsWith("http")) {
+      faceUrl = photo;
+    } else if (photo.startsWith("data:image/")) {
+      try {
+        const base64Data = photo.replace(/^data:image\/[\w+]+;base64,/, "");
+        const contentType = photo.match(/^data:(image\/[\w+]+);/)?.[1] ?? "image/jpeg";
+        const ext = contentType.split("/")[1] ?? "jpg";
+
+        // Get a pre-signed upload URL from fal.ai storage
+        const initRes = await fetch(
+          `https://rest.alpha.fal.ai/storage/upload/initiate?content_type=${encodeURIComponent(contentType)}&extension=${ext}`,
+          { headers: { "Authorization": `Key ${FAL_KEY}` } }
+        );
+        if (initRes.ok) {
+          const { upload_url, file_url } = await initRes.json();
+          const buf = Buffer.from(base64Data, "base64");
+          const putRes = await fetch(upload_url, {
+            method: "PUT",
+            headers: { "Content-Type": contentType },
+            body: buf,
+          });
+          if (putRes.ok) {
+            faceUrl = file_url;
+            console.log("[generate-hero] uploaded base64 photo →", faceUrl);
+          }
+        }
+      } catch (e) {
+        console.error("[generate-hero] photo upload failed:", e);
+      }
+    }
+  }
+
+  console.log("[generate-hero] champion:", name, "| faceUrl:", faceUrl ? "✓" : "none (text2img)");
 
   try {
-    if (useImgToImg) {
-      // PuLID: face-identity-preserving generation
+    if (faceUrl) {
+      // PuLID: face-identity-preserving generation using uploaded face photo
       const res = await fetch("https://fal.run/fal-ai/pulid", {
         method: "POST",
         headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: heroPrompt,
-          reference_image_url: photo,
+          images: [{ image_url: faceUrl }],
           negative_prompt: "blurry, bad quality, distorted face, deformed, different person",
           num_inference_steps: 30,
           guidance_scale: 4.5,
@@ -96,7 +131,7 @@ export async function POST(req: Request) {
       const data = JSON.parse(text);
       imageUrl = data.images?.[0]?.url;
     } else {
-      // text2img — works when photo is absent or a data URL
+      // text2img fallback — used when no profile photo is available
       const res = await fetch("https://fal.run/fal-ai/flux/dev", {
         method: "POST",
         headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
