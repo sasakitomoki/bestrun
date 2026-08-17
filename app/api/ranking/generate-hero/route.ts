@@ -125,10 +125,10 @@ export async function POST(req: Request) {
         headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: heroPrompt,
-          images: [{ image_url: faceUrl }],
+          reference_images: [{ image_url: faceUrl }],
           negative_prompt: "blurry, bad quality, distorted face, deformed, different person",
-          num_inference_steps: 30,
-          guidance_scale: 4.5,
+          num_inference_steps: 12,
+          guidance_scale: 1.5,
           id_scale: 1.0,
           image_size: "portrait_4_3",
           num_images: 1,
