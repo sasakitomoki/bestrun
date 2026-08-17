@@ -82,8 +82,12 @@ export async function POST(req: Request) {
 
         // Get a pre-signed upload URL from fal.ai storage
         const initRes = await fetch(
-          `https://rest.alpha.fal.ai/storage/upload/initiate?content_type=${encodeURIComponent(contentType)}&extension=${ext}`,
-          { headers: { "Authorization": `Key ${FAL_KEY}` } }
+          "https://rest.alpha.fal.ai/storage/upload/initiate",
+          {
+            method: "POST",
+            headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ content_type: contentType, extension: ext }),
+          }
         );
         console.log("[generate-hero] initiate status:", initRes.status);
         if (initRes.ok) {
