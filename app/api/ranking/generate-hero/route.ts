@@ -104,7 +104,7 @@ export async function POST(req: Request) {
     }
   }
 
-  console.log("[generate-hero] champion:", name, "| faceUrl:", faceUrl ? "✓" : "none (text2img)");
+  console.log("[generate-hero] champion:", name, "| photo type:", photo ? photo.substring(0, 30) : "null", "| faceUrl:", faceUrl ? "✓" : "none (text2img)");
 
   try {
     if (faceUrl) {
