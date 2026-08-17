@@ -58,15 +58,17 @@ export function ActivityFeed() {
     );
 
     try {
+      let res: Response;
       if (item.myReaction) {
-        await fetch(`/api/reactions?runId=${item.id}&userId=${user.id}`, { method: "DELETE" });
+        res = await fetch(`/api/reactions?runId=${item.id}&userId=${user.id}`, { method: "DELETE" });
       } else {
-        await fetch("/api/reactions", {
+        res = await fetch("/api/reactions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ runId: item.id, userId: user.id }),
         });
       }
+      if (!res.ok) throw new Error("api error");
     } catch {
       // Revert on error
       setItems((prev) =>

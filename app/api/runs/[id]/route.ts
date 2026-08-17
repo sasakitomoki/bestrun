@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isOwner } from "@/lib/owner";
+import { evaluateBadges } from "@/lib/badges";
 
 export const dynamic = "force-dynamic";
 
@@ -92,6 +93,52 @@ export async function PATCH(
       approver: { select: { id: true, name: true, photo: true } },
     },
   });
+
+  // Re-evaluate badges when an APPROVED run is changed (laps reduced or status changed).
+  const wasApproved = run.status === "APPROVED";
+  const isApproved  = updated.status === "APPROVED";
+  if (wasApproved || isApproved) {
+    const runnerId = run.runnerId;
+
+    const allApproved = await prisma.run.findMany({
+      where: { runnerId, status: "APPROVED" },
+      select: { laps: true, weatherTemp: true },
+    });
+
+    const totalLaps = allApproved.reduce((s, r) => s + r.laps, 0);
+    const totalApprovedRuns = allApproved.length;
+
+    // Union of badges that any single approved run can justify.
+    const shouldHave = new Set<string>();
+    for (const r of allApproved) {
+      for (const b of evaluateBadges({ totalApprovedRuns, totalLaps, currentLaps: r.laps, weatherTemp: r.weatherTemp })) {
+        shouldHave.add(b);
+      }
+    }
+
+    const existing = await prisma.achievement.findMany({
+      where: { userId: runnerId },
+      select: { badgeId: true },
+    });
+    const toRevoke = existing.map((a) => a.badgeId).filter((id) => !shouldHave.has(id));
+
+    if (toRevoke.length > 0) {
+      await prisma.achievement.deleteMany({
+        where: { userId: runnerId, badgeId: { in: toRevoke } },
+      });
+      // Clear selectedBadgeId if it was revoked.
+      const user = await prisma.user.findUnique({
+        where: { id: runnerId },
+        select: { selectedBadgeId: true },
+      });
+      if (user?.selectedBadgeId && toRevoke.includes(user.selectedBadgeId)) {
+        await prisma.user.update({
+          where: { id: runnerId },
+          data: { selectedBadgeId: null },
+        });
+      }
+    }
+  }
 
   return NextResponse.json(updated);
 }
