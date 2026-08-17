@@ -61,13 +61,11 @@ export async function POST(req: Request) {
   const { name, photo, totalLaps } = champion;
 
   const heroPrompt =
-    `Transform this photo into an epic running champion victory scene. ` +
-    `The person has just crossed the finish line in first place at the Imperial Palace Tokyo running course. ` +
-    `Arms raised triumphantly, golden championship medal around their neck, ` +
-    `golden confetti raining down, roaring crowd in background, ` +
-    `dramatic stadium spotlights, motion blur on background for speed effect, ` +
-    `"1st PLACE" banner visible, cinematic sports photography lighting, ` +
-    `keep the person's face, outfit and surroundings recognizable but transform the atmosphere to a winner's celebration`;
+    `Take this photo and make the person look like an undisputed champion and king. ` +
+    `Add dramatic cinematic lighting with golden hour glow, powerful confident expression, ` +
+    `majestic atmosphere, subtle golden crown or laurel wreath, rich dramatic background, ` +
+    `epic movie poster feel, deep shadows and highlights, aura of absolute victory. ` +
+    `Preserve the person's face, clothing and original setting as much as possible.`;
 
   let imageUrl: string | undefined;
 
@@ -83,7 +81,7 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           image_url: photo,
           prompt: heroPrompt,
-          strength: 0.55,
+          strength: 0.42,
           num_inference_steps: 35,
           guidance_scale: 4.5,
           num_images: 1,
