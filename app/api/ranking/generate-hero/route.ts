@@ -86,7 +86,7 @@ export async function POST(req: Request) {
           {
             method: "POST",
             headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ content_type: contentType, extension: ext }),
+            body: JSON.stringify({ content_type: contentType, extension: ext, file_name: `hero-face.${ext}` }),
           }
         );
         console.log("[generate-hero] initiate status:", initRes.status);
