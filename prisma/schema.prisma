@@ -124,3 +124,13 @@ model Reaction {
   @@unique([runId, userId])
   @@index([runId])
 }
+
+model MonthlyHero {
+  id          String   @id @default(cuid())
+  month       String   @unique  // YYYY-MM
+  userId      String
+  name        String
+  laps        Int
+  imageUrl    String
+  generatedAt DateTime @default(now())
+}
