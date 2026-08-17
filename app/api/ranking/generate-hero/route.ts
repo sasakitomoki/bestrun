@@ -84,8 +84,8 @@ export async function POST(req: Request) {
           image_size: "portrait_4_3",
           num_inference_steps: 30,
           guidance_scale: 5.0,
-          ip_adapter_scale: 0.8,
-          controlnet_conditioning_scale: 0.8,
+          ip_adapter_scale: 0.95,
+          controlnet_conditioning_scale: 0.95,
           num_images: 1,
         }),
       });

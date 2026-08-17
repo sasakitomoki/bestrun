@@ -22,7 +22,7 @@ type HeroData = {
 } | null;
 
 const SHOWN_KEY = "tbr-ranking-modal-shown";
-const HERO_PHASE_SECS = 5;
+const HERO_PHASE_SECS = 12;
 
 function prevMonthValue(): { value: string; label: string } {
   const now = new Date();
