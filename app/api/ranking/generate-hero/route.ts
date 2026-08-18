@@ -142,6 +142,8 @@ export async function POST(req: Request) {
       const data = JSON.parse(text);
       imageUrl = data.images?.[0]?.url;
       console.log("[generate-hero] img2img result:", imageUrl ?? "no url", "| keys:", Object.keys(data).join(","));
+    } else {
+      // text2img fallback — used when no profile photo is available
       const res = await fetch("https://fal.run/fal-ai/flux/dev", {
         method: "POST",
         headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
