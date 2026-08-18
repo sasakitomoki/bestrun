@@ -274,8 +274,6 @@ export default function RankingPage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "chart">("list");
   const [period, setPeriod] = useState<"monthly" | "alltime">("monthly");
-  const [heroGenerating, setHeroGenerating] = useState(false);
-  const [heroMsg, setHeroMsg] = useState<string | null>(null);
 
   const month = months[monthIdx]?.value ?? currentMonthValue();
   const monthLabel = months[monthIdx]?.label ?? month;
@@ -485,51 +483,8 @@ export default function RankingPage() {
       )}
 
       {user && isOwner(user.name) && period === "monthly" && (
-        <>
-          <div className="rounded-xl border border-sap-border bg-white p-4 shadow-sm space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-sap-text-mid">
-              🎨 ヒーロー画像生成
-            </p>
-            <p className="text-xs text-gray-500">
-              {monthLabel}の1位ユーザーのAI画像を生成します。来月のポップアップに表示されます。
-            </p>
-            {heroMsg && (
-              <p className={`text-xs font-semibold ${heroMsg.startsWith("✅") ? "text-green-600" : "text-red-500"}`}>
-                {heroMsg}
-              </p>
-            )}
-            <button
-              onClick={async () => {
-                if (!user) return;
-                setHeroGenerating(true);
-                setHeroMsg(null);
-                try {
-                  const res = await fetch("/api/ranking/generate-hero", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ requesterName: user.name, month }),
-                  });
-                  if (res.ok) {
-                    setHeroMsg("✅ 画像生成完了！来月のポップアップに表示されます。");
-                  } else {
-                    const d = await res.json();
-                    setHeroMsg(`❌ ${d.error ?? "生成失敗"}`);
-                  }
-                } catch {
-                  setHeroMsg("❌ 通信エラーが発生しました。");
-                } finally {
-                  setHeroGenerating(false);
-                }
-              }}
-              disabled={heroGenerating}
-              className="rounded-lg bg-sap-blue px-4 py-2 text-sm font-bold text-white hover:bg-sap-blue-dark disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {heroGenerating ? "生成中…（30〜60秒）" : "✨ ヒーロー画像を生成"}
-            </button>
-          </div>
-          <OwnerRunAdmin currentUser={user} month={month}
-            onChanged={() => setRankingKey((k) => k + 1)} />
-        </>
+        <OwnerRunAdmin currentUser={user} month={month}
+          onChanged={() => setRankingKey((k) => k + 1)} />
       )}
 
       {selectedUserId && (

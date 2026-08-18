@@ -18,8 +18,22 @@ type RankEntry = {
 type HeroData = {
   name: string;
   laps: number;
-  imageUrl: string;
+  photo: string | null;
 } | null;
+
+const SPARKLES = [
+  { top: -18, left: 20,  size: 16, delay: "0s"   },
+  { top: -12, left: 170, size: 12, delay: "0.5s" },
+  { top: 20,  left: -28, size: 20, delay: "0.9s" },
+  { top: 20,  left: 226, size: 14, delay: "0.3s" },
+  { top: 80,  left: -32, size: 12, delay: "1.3s" },
+  { top: 80,  left: 232, size: 18, delay: "0.7s" },
+  { top: 150, left: -28, size: 16, delay: "0.4s" },
+  { top: 150, left: 228, size: 14, delay: "1.1s" },
+  { top: 225, left: 40,  size: 18, delay: "0.2s" },
+  { top: 228, left: 165, size: 12, delay: "0.8s" },
+  { top: 235, left: 100, size: 20, delay: "1.5s" },
+];
 
 const SHOWN_KEY = "tbr-ranking-modal-shown";
 const HERO_PHASE_SECS = 12;
@@ -106,55 +120,79 @@ function HeroReveal({
       onClick={onAdvance}
     >
       <style>{`
-        @keyframes heroScale {
-          0%   { transform: scale(0.85); opacity: 0; }
-          100% { transform: scale(1);    opacity: 1; }
-        }
         @keyframes heroGlow {
-          0%, 100% { box-shadow: 0 0 40px 8px rgba(255,215,0,0.4); }
-          50%       { box-shadow: 0 0 70px 20px rgba(255,215,0,0.7); }
+          0%, 100% { box-shadow: 0 0 30px 8px rgba(255,215,0,0.5), 0 0 0 4px rgba(255,215,0,0.6); }
+          50%       { box-shadow: 0 0 60px 20px rgba(255,215,0,0.85), 0 0 0 4px rgba(255,215,0,0.9); }
+        }
+        @keyframes crownFloat {
+          0%, 100% { transform: translateX(-50%) translateY(0px); }
+          50%       { transform: translateX(-50%) translateY(-8px); }
+        }
+        @keyframes sparkle {
+          0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+          50%       { opacity: 1; transform: scale(1) rotate(180deg); }
         }
         @keyframes textSlideUp {
           0%   { transform: translateY(24px); opacity: 0; }
           100% { transform: translateY(0);    opacity: 1; }
         }
+        @keyframes heroScale {
+          0%   { transform: scale(0.85); opacity: 0; }
+          100% { transform: scale(1);    opacity: 1; }
+        }
       `}</style>
 
       {/* Month label */}
-      <p
-        className={`mb-3 text-sm font-semibold tracking-widest text-yellow-400/80 uppercase transition-all duration-700 delay-100 ${
-          visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-        }`}
-      >
+      <p className="mb-6 text-sm font-semibold tracking-widest text-yellow-400/80 uppercase">
         {monthLabel} Champion
       </p>
 
-      {/* Hero image */}
+      {/* Photo + crown + sparkles */}
       {hero && (
-        <div
-          style={{
-            animation: visible ? "heroScale 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards, heroGlow 2.5s ease-in-out 0.8s infinite" : undefined,
-            borderRadius: "1rem",
+        <div style={{ position: "relative", display: "inline-block", animation: visible ? "heroScale 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards" : undefined }}>
+          {/* Sparkles */}
+          {SPARKLES.map((s, i) => (
+            <span key={i} aria-hidden style={{
+              position: "absolute",
+              top: s.top, left: s.left,
+              fontSize: s.size,
+              color: "#FFD700",
+              animation: `sparkle 1.8s ease-in-out ${s.delay} infinite`,
+              pointerEvents: "none",
+              lineHeight: 1,
+            }}>✦</span>
+          ))}
+
+          {/* Photo circle with glow */}
+          <div style={{
+            width: 220, height: 220,
+            borderRadius: "50%",
             overflow: "hidden",
-            maxWidth: "min(85vw, 320px)",
-            aspectRatio: "3/4",
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={hero.imageUrl}
-            alt={`${hero.name} champion`}
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          />
+            border: "4px solid #FFD700",
+            animation: visible ? "heroGlow 2.5s ease-in-out 0.8s infinite" : undefined,
+          }}>
+            <Avatar photo={hero.photo} name={hero.name} size={220} />
+          </div>
+
+          {/* Crown */}
+          <span aria-hidden style={{
+            position: "absolute",
+            top: -50, left: "50%",
+            fontSize: 56,
+            lineHeight: 1,
+            animation: "crownFloat 2s ease-in-out infinite",
+            filter: "drop-shadow(0 0 10px rgba(255,215,0,0.9))",
+            pointerEvents: "none",
+          }}>👑</span>
         </div>
       )}
 
       {/* Name + laps */}
       <div
         style={{ animation: visible ? "textSlideUp 0.6s ease forwards 0.5s" : undefined, opacity: 0 }}
-        className="mt-5 text-center"
+        className="mt-8 text-center"
       >
-        <p className="text-3xl font-black text-white tracking-wide">👑 {hero?.name}</p>
+        <p className="text-3xl font-black text-white tracking-wide">{hero?.name}</p>
         <p className="mt-1 text-lg font-bold text-yellow-400">{hero?.laps}周達成！</p>
       </div>
 
@@ -180,25 +218,21 @@ export function MonthlyRankingModal() {
     const lastShown = localStorage.getItem(SHOWN_KEY);
     if (lastShown === prev.value) return;
 
-    Promise.all([
-      fetch(`/api/ranking?month=${prev.value}`).then((r) => r.json()).catch(() => ({})),
-      fetch(`/api/ranking/generate-hero?month=${prev.value}`).then((r) => r.json()).catch(() => ({ hero: null })),
-    ]).then(([rankData, heroData]) => {
-      const ranked = (rankData.ranking ?? []).filter((r: RankEntry) => r.laps > 0);
-      if (ranked.length === 0) return;
-      setRanking(ranked.slice(0, 5));
-      setMonthLabel(prev.label);
-      const h = heroData.hero;
-      if (h?.imageUrl) {
-        setHero({ name: h.name, laps: h.laps, imageUrl: h.imageUrl });
+    fetch(`/api/ranking?month=${prev.value}`)
+      .then((r) => r.json())
+      .catch(() => ({}))
+      .then((rankData) => {
+        const ranked = (rankData.ranking ?? []).filter((r: RankEntry) => r.laps > 0);
+        if (ranked.length === 0) return;
+        setRanking(ranked.slice(0, 5));
+        setMonthLabel(prev.label);
+        const top = ranked[0];
+        setHero({ name: top.name, laps: top.laps, photo: top.photo ?? null });
         setPhase("hero");
-      } else {
-        setPhase("ranking");
-      }
-      setShow(true);
-      requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
-      localStorage.setItem(SHOWN_KEY, prev.value);
-    });
+        setShow(true);
+        requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
+        localStorage.setItem(SHOWN_KEY, prev.value);
+      });
   }, []);
 
   function advanceToRanking() {

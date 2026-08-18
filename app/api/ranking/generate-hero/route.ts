@@ -125,7 +125,7 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           prompt: heroPrompt,
           image_url: faceUrl,
-          strength: 0.25,
+          strength: 0.15,
           negative_prompt: "blurry, bad quality, distorted face, deformed, different person",
           num_inference_steps: 28,
           guidance_scale: 3.5,
