@@ -13,11 +13,12 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   name      String   @unique
+  email     String?  @unique
   photo        String?
   passwordHash String
   selectedBadgeId String?
-  statusMessage   String?  // Free-text one-liner shown on ranking and mypage.
-  motivation      String?  // Monthly motivation tag (e.g. "今月本気出す").
+  statusMessage   String?
+  motivation      String?
   createdAt    DateTime @default(now())
 
   runs           Run[]  @relation("Runner")
@@ -133,4 +134,15 @@ model MonthlyHero {
   laps        Int
   imageUrl    String
   generatedAt DateTime @default(now())
+}
+
+model PendingRegistration {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  photo        String?
+  otp          String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
 }

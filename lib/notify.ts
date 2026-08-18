@@ -123,7 +123,24 @@ export async function notifyMonthlyRanking(params: {
   ]);
 }
 
-// #8 イベント追加（グループ）
+// #9 メール認証OTP（本人へ直接送信）
+export async function sendOtpEmail(to: string, otp: string): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn("[notify] RESEND_API_KEY not set, skipping OTP email.");
+    return;
+  }
+  const html = `<p>🔑 <b>BestRun メール認証コード</b><br>${DIV}<br><b style="font-size:28px;letter-spacing:6px">${otp}</b><br><br>このコードは10分間有効です。<br>身に覚えのない場合は無視してください。<br>${DIV}</p>`;
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({ from: FROM, to: [to], subject: "【BestRun】メール認証コード", html }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("[notify] OTP email error:", res.status, text);
+  }
+}
 export async function notifyEventCreated(params: {
   title: string;
   date: string;
