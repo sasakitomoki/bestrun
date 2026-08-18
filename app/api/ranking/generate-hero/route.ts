@@ -127,7 +127,7 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           prompt: heroPrompt,
           image_url: faceUrl,
-          strength: 0.65,
+          strength: 0.5,
           negative_prompt: "blurry, bad quality, distorted face, deformed, different person",
           num_inference_steps: 28,
           guidance_scale: 3.5,
@@ -141,8 +141,7 @@ export async function POST(req: Request) {
       }
       const data = JSON.parse(text);
       imageUrl = data.images?.[0]?.url;
-    } else {
-      // text2img fallback — used when no profile photo is available
+      console.log("[generate-hero] img2img result:", imageUrl ?? "no url", "| keys:", Object.keys(data).join(","));
       const res = await fetch("https://fal.run/fal-ai/flux/dev", {
         method: "POST",
         headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
