@@ -18,7 +18,8 @@ export async function POST(req: Request) {
 
   if (!name) return NextResponse.json({ error: "ユーザー名を入力してください。" }, { status: 400 });
   if (name.length > 30) return NextResponse.json({ error: "ユーザー名は30文字以内で入力してください。" }, { status: 400 });
-  if (!email.endsWith("@sap.com")) {
+  const ALLOWED_TEST_EMAILS = ["sasatomo14@gmail.com"];
+  if (!email.endsWith("@sap.com") && !ALLOWED_TEST_EMAILS.includes(email)) {
     return NextResponse.json({ error: "メールアドレスは @sap.com のドメインのみ使用できます。" }, { status: 400 });
   }
   if (password.length < 6) return NextResponse.json({ error: "パスワードは6文字以上で入力してください。" }, { status: 400 });
