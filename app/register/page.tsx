@@ -241,6 +241,11 @@ export default function RegisterPage() {
           <p className="text-sm text-gray-500">
             <b>{email}</b> に6桁の認証コードを送りました。メールを確認してください。
           </p>
+          <p className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-700">
+            📬 メールが届かない場合は、Outlookの<br />
+            <b>設定 → メール → 迷惑メール → 信頼できる差出人およびドメイン</b><br />
+            に <b>noreply@thebestrunners.com</b> を追加してから再度お試しください。
+          </p>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">認証コード（6桁）</label>
