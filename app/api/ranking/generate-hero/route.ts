@@ -61,11 +61,9 @@ export async function POST(req: Request) {
   const { name, photo, totalLaps } = champion;
 
   const heroPrompt =
-    `The same person as in the reference photo, champion of the month, ` +
-    `same clothing and background as original, ` +
-    `dramatic golden cinematic lighting, royal and majestic atmosphere, ` +
-    `golden glow, winner's aura, confident expression, ` +
-    `epic movie poster style lighting, photorealistic, high quality`;
+    `The exact same person, same face, same clothing, same background as the original photo, ` +
+    `add a glowing golden crown on the head, add golden sparkles and light particles around the person, ` +
+    `subtle golden glow effect, keep everything else identical to the original, photorealistic`;
 
   let imageUrl: string | undefined;
 
@@ -127,7 +125,7 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           prompt: heroPrompt,
           image_url: faceUrl,
-          strength: 0.5,
+          strength: 0.25,
           negative_prompt: "blurry, bad quality, distorted face, deformed, different person",
           num_inference_steps: 28,
           guidance_scale: 3.5,
