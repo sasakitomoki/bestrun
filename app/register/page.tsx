@@ -72,7 +72,8 @@ export default function RegisterPage() {
     setError(null);
     if (!name.trim()) { setError("ユーザー名を入力してください。"); return; }
     if (!email.trim()) { setError("メールアドレスを入力してください。"); return; }
-    if (!email.toLowerCase().endsWith("@sap.com")) {
+    const ALLOWED_TEST_EMAILS = ["sasatomo14@gmail.com"];
+    if (!email.toLowerCase().endsWith("@sap.com") && !ALLOWED_TEST_EMAILS.includes(email.toLowerCase())) {
       setError("メールアドレスは @sap.com のドメインのみ使用できます。");
       return;
     }
