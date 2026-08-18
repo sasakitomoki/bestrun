@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronDown, ChevronUp, ClipboardList } from "lucide-react";
+import Link from "next/link";
 import { EventSection } from "@/components/EventSection";
 import { MonthlySummary } from "@/components/MonthlySummary";
 import { ActivityFeed } from "@/components/ActivityFeed";
@@ -15,22 +16,61 @@ const STEPS = [
   { step: "06", title: "バッジを集める",  body: "累計周回数や気温条件でバッジ獲得。猛暑日に走れば🔥、50周超えれば🏆が待っている！" },
 ];
 
+type LatestPost = {
+  id: string;
+  title: string;
+  body: string;
+  photo: string | null;
+  createdAt: string;
+} | null;
+
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 export default function HomePage() {
   const [stepsOpen, setStepsOpen] = useState(false);
+  const [latestPost, setLatestPost] = useState<LatestPost>(undefined as unknown as LatestPost);
+
+  useEffect(() => {
+    fetch("/api/posts")
+      .then((r) => r.json())
+      .then((d) => setLatestPost(d.posts?.[0] ?? null))
+      .catch(() => setLatestPost(null));
+  }, []);
 
   return (
     <div className="space-y-5">
-
-      {/* ① 今月のサマリー（順位・ランキング・チーム・天気） */}
       <MonthlySummary />
-
-      {/* ② カレンダー＋イベント */}
       <EventSection />
 
-      {/* ③ 直近の走破 */}
-      <ActivityFeed />
+      {/* 最新掲示板投稿 or 直近走破 */}
+      {latestPost ? (
+        <div className="rounded-xl border border-sap-border bg-white shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between bg-sap-shell px-4 py-2.5">
+            <span className="flex items-center gap-2 text-sm font-bold text-white">
+              <ClipboardList size={15} className="text-yellow-300" />
+              掲示板の最新情報
+            </span>
+            <Link href="/board" className="text-xs text-white/70 hover:text-white">
+              すべて見る →
+            </Link>
+          </div>
+          {latestPost.photo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={latestPost.photo} alt={latestPost.title} className="w-full max-h-64 object-cover" />
+          )}
+          <div className="p-4 space-y-1">
+            <h2 className="text-base font-bold text-sap-text-dark">{latestPost.title}</h2>
+            <p className="text-xs text-gray-400">{formatDate(latestPost.createdAt)}</p>
+            <p className="whitespace-pre-wrap text-sm text-gray-700 pt-1">{latestPost.body}</p>
+          </div>
+        </div>
+      ) : latestPost === null ? (
+        <ActivityFeed />
+      ) : null}
 
-      {/* ⑥ 使い方ガイド（折りたたみ） */}
       <div className="rounded-xl border border-sap-border bg-white shadow-sm overflow-hidden">
         <button
           onClick={() => setStepsOpen((o) => !o)}
@@ -51,7 +91,6 @@ export default function HomePage() {
           </div>
         )}
       </div>
-
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Trophy, UserCircle, LogOut } from "lucide-react";
+import { Trophy, UserCircle, LogOut, ClipboardList } from "lucide-react";
 import { useSession } from "@/lib/session";
 import { Avatar } from "@/components/Avatar";
 import { SapLogo } from "@/components/SapLogo";
@@ -51,6 +51,10 @@ export function NavBar() {
           <Link href="/ranking" className={linkClass("/ranking")}>
             <Trophy size={15} />
             <span className="hidden sm:inline">ランキング</span>
+          </Link>
+          <Link href="/board" className={linkClass("/board")}>
+            <ClipboardList size={15} />
+            <span className="hidden sm:inline">掲示板</span>
           </Link>
 
           {user ? (
