@@ -24,7 +24,10 @@ export default function RootLayout({
           <MonthlyRankingModal />
           <ApprovalToast />
           <main className="mx-auto w-full max-w-4xl px-4 py-6">
-            <AuthGuard>{children}</AuthGuard>
+            <AuthGuard>
+              <MonthlyRankingModal />
+              {children}
+            </AuthGuard>
           </main>
         </SessionProvider>
       </body>
