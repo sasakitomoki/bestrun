@@ -144,7 +144,7 @@ export async function notifyPostCreated(params: {
 }
 
 // #9 メール認証OTP（本人へ直接送信）
-export async function sendOtpEmail
+export async function sendOtpEmail(to: string, otp: string): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.warn("[notify] RESEND_API_KEY not set, skipping OTP email.");
