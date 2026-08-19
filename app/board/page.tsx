@@ -1,17 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Upload, Trash2, PlusCircle, ClipboardList } from "lucide-react";
+import { Upload, Trash2, PlusCircle, ClipboardList, Pencil, Check, X } from "lucide-react";
 import { useSession } from "@/lib/session";
 import { isOwner } from "@/lib/owner";
-import { Avatar } from "@/components/Avatar";
 
 type Post = {
   id: string;
   title: string;
   body: string;
   photo: string | null;
+  authorName: string;
   createdAt: string;
+  updatedAt: string;
 };
 
 function fileToResizedDataUrl(file: File, max = 800): Promise<string> {
@@ -43,20 +44,200 @@ function formatDate(iso: string) {
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-export default function BoardPage() {
-  const { user } = useSession();
-  const owner = user ? isOwner(user.name) : false;
+function PostForm({
+  userName,
+  onPosted,
+  onCancel,
+}: {
+  userName: string;
+  onPosted: (post: Post) => void;
+  onCancel: () => void;
+}) {
   const fileRef = useRef<HTMLInputElement>(null);
-
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [photoData, setPhotoData] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try { setPhotoData(await fileToResizedDataUrl(file)); }
+    catch (err) { setError(err instanceof Error ? err.message : "画像処理に失敗しました。"); }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!title.trim()) { setError("見出しを入力してください。"); return; }
+    if (!body.trim()) { setError("コメントを入力してください。"); return; }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requesterName: userName, title: title.trim(), body: body.trim(), photo: photoData }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      onPosted(data.post);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "投稿に失敗しました。");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-sap-border bg-white p-5 shadow-sm">
+      {error && <p className="rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p>}
+      <div>
+        <label className="mb-1 block text-xs font-semibold text-gray-600">見出し</label>
+        <input
+          type="text" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80}
+          placeholder="見出しを入力"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-sap-blue focus:outline-none"
+        />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-semibold text-gray-600">コメント</label>
+        <textarea
+          value={body} onChange={(e) => setBody(e.target.value)} rows={4}
+          placeholder="コメントを入力"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-sap-blue focus:outline-none resize-none"
+        />
+      </div>
+      <div>
+        {photoData ? (
+          <div className="relative inline-block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={photoData} alt="preview" className="max-h-40 rounded-lg object-cover" />
+            <button type="button" onClick={() => setPhotoData(null)}
+              className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white hover:bg-black/70">
+              <Trash2 size={12} />
+            </button>
+          </div>
+        ) : (
+          <button type="button" onClick={() => fileRef.current?.click()}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
+            <Upload size={15} /> 写真を追加（任意）
+          </button>
+        )}
+        <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+      </div>
+      <div className="flex gap-2">
+        <button type="submit" disabled={submitting}
+          className="flex-1 rounded-lg bg-sap-blue py-2.5 text-sm font-bold text-white hover:bg-sap-blue-dark disabled:opacity-50">
+          {submitting ? "投稿中..." : "投稿する"}
+        </button>
+        <button type="button" onClick={onCancel}
+          className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50">
+          キャンセル
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function EditForm({
+  post,
+  userName,
+  onSaved,
+  onCancel,
+}: {
+  post: Post;
+  userName: string;
+  onSaved: (post: Post) => void;
+  onCancel: () => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [title, setTitle] = useState(post.title);
+  const [body, setBody] = useState(post.body);
+  const [photoData, setPhotoData] = useState<string | null>(post.photo);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try { setPhotoData(await fileToResizedDataUrl(file)); }
+    catch (err) { setError(err instanceof Error ? err.message : "画像処理に失敗しました。"); }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!title.trim()) { setError("見出しを入力してください。"); return; }
+    if (!body.trim()) { setError("コメントを入力してください。"); return; }
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requesterName: userName, title: title.trim(), body: body.trim(), photo: photoData }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      onSaved(data.post);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "更新に失敗しました。");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3 p-4">
+      {error && <p className="rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p>}
+      <input
+        type="text" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80}
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-bold focus:border-sap-blue focus:outline-none"
+      />
+      <textarea
+        value={body} onChange={(e) => setBody(e.target.value)} rows={4}
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-sap-blue focus:outline-none resize-none"
+      />
+      <div>
+        {photoData ? (
+          <div className="relative inline-block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={photoData} alt="preview" className="max-h-40 rounded-lg object-cover" />
+            <button type="button" onClick={() => setPhotoData(null)}
+              className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white hover:bg-black/70">
+              <X size={12} />
+            </button>
+          </div>
+        ) : (
+          <button type="button" onClick={() => fileRef.current?.click()}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
+            <Upload size={15} /> 写真を追加
+          </button>
+        )}
+        <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+      </div>
+      <div className="flex gap-2">
+        <button type="submit" disabled={submitting}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-sap-blue px-4 py-2 text-sm font-bold text-white hover:bg-sap-blue-dark disabled:opacity-50">
+          <Check size={14} /> {submitting ? "保存中..." : "保存"}
+        </button>
+        <button type="button" onClick={onCancel}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
+          <X size={14} /> キャンセル
+        </button>
+      </div>
+    </form>
+  );
+}
+
+export default function BoardPage() {
+  const { user } = useSession();
+  const owner = user ? isOwner(user.name) : false;
+
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/posts")
@@ -66,34 +247,9 @@ export default function BoardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try { setPhotoData(await fileToResizedDataUrl(file)); }
-    catch (err) { setFormError(err instanceof Error ? err.message : "画像処理に失敗しました。"); }
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setFormError(null);
-    if (!title.trim()) { setFormError("見出しを入力してください。"); return; }
-    if (!body.trim()) { setFormError("コメントを入力してください。"); return; }
-    setSubmitting(true);
-    try {
-      const res = await fetch("/api/posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requesterName: user!.name, title: title.trim(), body: body.trim(), photo: photoData }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setPosts((prev) => [data.post, ...prev]);
-      setTitle(""); setBody(""); setPhotoData(null); setShowForm(false);
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : "投稿に失敗しました。");
-    } finally {
-      setSubmitting(false);
-    }
+  function canEdit(post: Post) {
+    if (!user) return false;
+    return post.authorName === user.name || owner;
   }
 
   async function handleDelete(id: string) {
@@ -110,65 +266,24 @@ export default function BoardPage() {
           <ClipboardList size={18} className="text-sap-blue" />
           掲示板
         </div>
-        {owner && (
+        {user && !showForm && (
           <button
-            onClick={() => setShowForm((v) => !v)}
+            onClick={() => setShowForm(true)}
             className="inline-flex items-center gap-1.5 rounded-lg bg-sap-blue px-3 py-1.5 text-sm font-semibold text-white hover:bg-sap-blue-dark"
           >
             <PlusCircle size={15} />
-            {showForm ? "キャンセル" : "投稿する"}
+            投稿する
           </button>
         )}
       </div>
 
-      {/* Post form (owner only) */}
-      {owner && showForm && (
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-sap-border bg-white p-5 shadow-sm">
-          {formError && <p className="rounded-lg bg-red-50 p-2 text-sm text-red-700">{formError}</p>}
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600">見出し</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              maxLength={80}
-              placeholder="見出しを入力"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-sap-blue focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600">コメント</label>
-            <textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              rows={4}
-              placeholder="コメントを入力"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-sap-blue focus:outline-none resize-none"
-            />
-          </div>
-          <div>
-            {photoData ? (
-              <div className="relative inline-block">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photoData} alt="preview" className="max-h-40 rounded-lg object-cover" />
-                <button type="button" onClick={() => setPhotoData(null)}
-                  className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white hover:bg-black/70">
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ) : (
-              <button type="button" onClick={() => fileRef.current?.click()}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
-                <Upload size={15} /> 写真を追加（任意）
-              </button>
-            )}
-            <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
-          </div>
-          <button type="submit" disabled={submitting}
-            className="w-full rounded-lg bg-sap-blue py-2.5 text-sm font-bold text-white hover:bg-sap-blue-dark disabled:opacity-50">
-            {submitting ? "投稿中..." : "投稿する"}
-          </button>
-        </form>
+      {/* Post form */}
+      {user && showForm && (
+        <PostForm
+          userName={user.name}
+          onPosted={(post) => { setPosts((prev) => [post, ...prev]); setShowForm(false); }}
+          onCancel={() => setShowForm(false)}
+        />
       )}
 
       {/* Posts */}
@@ -184,23 +299,44 @@ export default function BoardPage() {
         <ol className="space-y-4">
           {posts.map((post) => (
             <li key={post.id} className="rounded-xl border border-sap-border bg-white shadow-sm overflow-hidden">
-              {post.photo && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={post.photo} alt={post.title} className="w-full max-h-72 object-cover" />
-              )}
-              <div className="p-4 space-y-1">
-                <div className="flex items-start justify-between gap-2">
-                  <h2 className="text-base font-bold text-sap-text-dark leading-snug">{post.title}</h2>
-                  {owner && (
-                    <button onClick={() => handleDelete(post.id)}
-                      className="shrink-0 rounded p-1 text-gray-300 hover:text-red-400">
-                      <Trash2 size={15} />
-                    </button>
+              {editingId === post.id ? (
+                <EditForm
+                  post={post}
+                  userName={user!.name}
+                  onSaved={(updated) => { setPosts((prev) => prev.map((p) => p.id === updated.id ? updated : p)); setEditingId(null); }}
+                  onCancel={() => setEditingId(null)}
+                />
+              ) : (
+                <>
+                  {post.photo && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={post.photo} alt={post.title} className="w-full max-h-72 object-cover" />
                   )}
-                </div>
-                <p className="text-xs text-gray-400">{formatDate(post.createdAt)}</p>
-                <p className="whitespace-pre-wrap text-sm text-gray-700 pt-1">{post.body}</p>
-              </div>
+                  <div className="p-4 space-y-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <h2 className="text-base font-bold text-sap-text-dark leading-snug">{post.title}</h2>
+                      {canEdit(post) && (
+                        <div className="flex shrink-0 gap-1">
+                          <button onClick={() => setEditingId(post.id)}
+                            className="rounded p-1 text-gray-300 hover:text-sap-blue">
+                            <Pencil size={15} />
+                          </button>
+                          <button onClick={() => handleDelete(post.id)}
+                            className="rounded p-1 text-gray-300 hover:text-red-400">
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      {post.authorName && <span className="mr-2 font-medium text-gray-500">{post.authorName}</span>}
+                      {formatDate(post.createdAt)}
+                      {post.updatedAt !== post.createdAt && <span className="ml-1 text-gray-300">（編集済み）</span>}
+                    </p>
+                    <p className="whitespace-pre-wrap text-sm text-gray-700 pt-1">{post.body}</p>
+                  </div>
+                </>
+              )}
             </li>
           ))}
         </ol>

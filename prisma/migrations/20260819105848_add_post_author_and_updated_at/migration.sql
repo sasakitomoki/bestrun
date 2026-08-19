@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Post" ADD COLUMN "authorName" TEXT NOT NULL DEFAULT '',
+ADD COLUMN "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT now();
