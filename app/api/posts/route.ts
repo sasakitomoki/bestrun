@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isOwner } from "@/lib/owner";
+import { notifyPostCreated } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -27,5 +28,6 @@ export async function POST(req: Request) {
   if (!postBody) return NextResponse.json({ error: "コメントを入力してください。" }, { status: 400 });
 
   const post = await prisma.post.create({ data: { title, body: postBody, photo } });
+  notifyPostCreated({ title, body: postBody });
   return NextResponse.json({ post }, { status: 201 });
 }

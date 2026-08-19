@@ -9,7 +9,7 @@ const APP_URL = process.env.APP_URL ?? "https://bestrunners.onrender.com";
 
 const DIV = "━━━━━━━━━━━━━━━━━━━━";
 
-async function sendMail(lines: string[]): Promise<void> {
+async function sendMail(lines: string[], to: string = TO): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.warn("[notify] RESEND_API_KEY not set, skipping notification.");
@@ -24,7 +24,7 @@ async function sendMail(lines: string[]): Promise<void> {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({ from: FROM, to: [TO], subject: SUBJECT, html }),
+    body: JSON.stringify({ from: FROM, to: [to], subject: SUBJECT, html }),
   });
 
   if (!res.ok) {
@@ -35,15 +35,17 @@ async function sendMail(lines: string[]): Promise<void> {
 
 // --- Notification functions ---
 
-// #1 走破申請が届いた（グループ）
+// #1 走破申請が届いた（承認者本人へ）
 export async function notifyRunSubmitted(params: {
   runnerName: string;
   approverName: string;
+  approverEmail: string | null;
   laps: number;
   km: number;
-  date: string; // YYYY-MM-DD
+  date: string;
 }): Promise<void> {
-  const { runnerName, approverName, laps, km, date } = params;
+  const { runnerName, approverName, approverEmail, laps, km, date } = params;
+  const to = approverEmail ?? TO;
   await sendMail([
     `🏃 <b>承認依頼が届いています！</b>`,
     DIV,
@@ -53,7 +55,7 @@ export async function notifyRunSubmitted(params: {
     `${approverName} さん、マイページから確認をお願いします！`,
     DIV,
     `👉 <a href="${APP_URL}/mypage">マイページで確認する</a>`,
-  ]);
+  ], to);
 }
 
 // #3 バッジ獲得（グループ）
@@ -123,8 +125,26 @@ export async function notifyMonthlyRanking(params: {
   ]);
 }
 
+// #8 掲示板投稿（グループ）
+export async function notifyPostCreated(params: {
+  title: string;
+  body: string;
+}): Promise<void> {
+  const { title, body } = params;
+  const excerpt = body.length > 100 ? body.slice(0, 100) + "…" : body;
+  await sendMail([
+    `📋 <b>掲示板に新しい投稿があります！</b>`,
+    DIV,
+    `📌 <b>${title}</b>`,
+    ``,
+    excerpt,
+    DIV,
+    `👉 <a href="${APP_URL}/board">掲示板を見る</a>`,
+  ]);
+}
+
 // #9 メール認証OTP（本人へ直接送信）
-export async function sendOtpEmail(to: string, otp: string): Promise<void> {
+export async function sendOtpEmail
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.warn("[notify] RESEND_API_KEY not set, skipping OTP email.");

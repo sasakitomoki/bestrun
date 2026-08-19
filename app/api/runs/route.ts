@@ -72,7 +72,7 @@ export async function POST(req: Request) {
   // Fetch names for the notification (non-blocking).
   prisma.user.findMany({
     where: { id: { in: [runnerId, approverId] } },
-    select: { id: true, name: true },
+    select: { id: true, name: true, email: true },
   }).then((users) => {
     const runner = users.find((u) => u.id === runnerId);
     const approver = users.find((u) => u.id === approverId);
@@ -83,6 +83,7 @@ export async function POST(req: Request) {
       notifyRunSubmitted({
         runnerName: runner.name,
         approverName: approver.name,
+        approverEmail: approver.email ?? null,
         laps,
         km: lapsToKm(laps),
         date: dateLabel,
