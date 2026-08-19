@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { BADGE_MAP } from "@/lib/badges";
+import { useSession } from "@/lib/session";
 
 type RankEntry = {
   rank: number | null;
@@ -206,6 +207,7 @@ function HeroReveal({
 
 // ─── Main modal ────────────────────────────────────────────────────────────────
 export function MonthlyRankingModal() {
+  const { user, loading } = useSession();
   const [phase, setPhase] = useState<"hero" | "ranking">("hero");
   const [show, setShow] = useState(false);
   const [ranking, setRanking] = useState<RankEntry[]>([]);
@@ -214,6 +216,7 @@ export function MonthlyRankingModal() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (loading || !user) return;
     const prev = prevMonthValue();
     const lastShown = localStorage.getItem(SHOWN_KEY);
     if (lastShown === prev.value) return;

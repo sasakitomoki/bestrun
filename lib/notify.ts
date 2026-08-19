@@ -45,7 +45,7 @@ export async function notifyRunSubmitted(params: {
   date: string;
 }): Promise<void> {
   const { runnerName, approverName, approverEmail, laps, km, date } = params;
-  const to = approverEmail ?? TO;
+  if (!approverEmail) return;
   await sendMail([
     `🏃 <b>承認依頼が届いています！</b>`,
     DIV,
@@ -55,7 +55,7 @@ export async function notifyRunSubmitted(params: {
     `${approverName} さん、マイページから確認をお願いします！`,
     DIV,
     `👉 <a href="${APP_URL}/mypage">マイページで確認する</a>`,
-  ], to);
+  ], approverEmail);
 }
 
 // #3 バッジ獲得（グループ）
