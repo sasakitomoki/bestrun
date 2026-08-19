@@ -9,9 +9,10 @@ const EMAIL_MAP: { name: string; email: string }[] = [
   { name: "りんたろう",         email: "rintaro.tanaka@sap.com" },
   { name: "りくと",             email: "rikuto.morishima@sap.com" },
   { name: "きっしー",           email: "naoki.kishida@sap.com" },
-  { name: "田中溪より早起き男", email: "yuma.sasaki@sap.com" },
+  { name: "田中渓より早起き男", email: "yuma.sasaki@sap.com" },
   { name: "かずと",             email: "kazuto.sugai@sap.com" },
   { name: "けん",               email: "ken.yasukawa@sap.com" },
+  { name: "かなと",             email: "kanato.hirakawa@sap.com" },
 ];
 
 async function main() {

@@ -21,7 +21,6 @@ export default function RootLayout({
       <body>
         <SessionProvider>
           <NavBar />
-          <MonthlyRankingModal />
           <ApprovalToast />
           <main className="mx-auto w-full max-w-4xl px-4 py-6">
             <AuthGuard>
