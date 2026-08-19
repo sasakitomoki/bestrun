@@ -46,7 +46,12 @@ export async function notifyRunSubmitted(params: {
 }): Promise<void> {
   const { runnerName, approverName, approverEmail, laps, km, date } = params;
   if (!approverEmail) return;
-  await sendMail([
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn("[notify] RESEND_API_KEY not set, skipping notification.");
+    return;
+  }
+  const lines = [
     `🏃 <b>承認依頼が届いています！</b>`,
     DIV,
     `👤 申請者：<b>${runnerName}</b> さん`,
@@ -55,7 +60,17 @@ export async function notifyRunSubmitted(params: {
     `${approverName} さん、マイページから確認をお願いします！`,
     DIV,
     `👉 <a href="${APP_URL}/mypage">マイページで確認する</a>`,
-  ], approverEmail);
+  ];
+  const html = `<p>${lines.join("<br>")}</p>`;
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({ from: FROM, to: [approverEmail], subject: "The Best Runners teams approval request", html }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("[notify] Resend error:", res.status, text);
+  }
 }
 
 // #3 バッジ獲得（グループ）
